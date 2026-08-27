@@ -498,7 +498,6 @@ else:
                 with col_btn:
                     st.markdown("<br>", unsafe_allow_html=True)
                     if st.button("Log Uses (+XP)", key=f"btn_{p['id']}"):
-                        # Automatically update uses and add XP immediately
                         p["total_uses"] = p.get("total_uses", 0) + add_uses
                         if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
                         st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + (add_uses * 5)
@@ -562,11 +561,11 @@ else:
         stats = st.session_state.db.get("stats", {})
         start_date_str = stats.get("no_buy_start_date", str(datetime.date.today()))
         try:
-            start_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            parsed_start_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d").date()
         except Exception:
-            start_date = datetime.date.today()
+            parsed_start_date = datetime.date.today()
             
-        days_on_no_buy = max((datetime.date.today() - start_date).days, 0)
+        days_on_no_buy = max((datetime.date.today() - parsed_start_date).days, 0)
         finished_lips = stats.get("finished_lip_products", 0)
         rewards_redeemed = stats.get("rewards_redeemed", 0)
         available_rewards = (finished_lips // 5) - rewards_redeemed
@@ -578,10 +577,20 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
+        # Fully interactive calendar date picker to customize/set the start date!
+        with st.form("no_buy_date_form"):
+            new_start_date = st.date_input("Set or adjust No-Buy start date:", value=parsed_start_date)
+            if st.form_submit_button("Update Start Date ✓"):
+                st.session_state.db["stats"]["no_buy_start_date"] = str(new_start_date)
+                save_data(st.session_state.db)
+                st.success("No-buy start date updated successfully!")
+                st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(f"""
         <div class="vanity-card" style="background-color: #f7f3fd;">
             <h4 style="margin:0 0 0.5rem 0; font-family:'Playfair Display', serif;">Lip Product Empties Reward System</h4>
-            <p style="margin:0 0 0.4rem 0; font-size:0.9rem;">Finish <b>5 lip products</b> = Unlock 1 luxury lip treat reward!</p>
+            <p style="margin:0 0 0.4rem 0; font-size:0.9rem;">Finish <b>5 lip products</b> (lip gloss, lipstick, lip liner, lip mask, or lip balm) = Unlock 1 reward!</p>
             <p style="margin:0; font-size:0.95rem;">Progress: <b>{finished_lips % 5} / 5</b> toward next reward (Total finished lips: {finished_lips})</p>
             <p style="margin:5px 0 0 0; font-size:0.95rem; color:#4a3468;"><b>Available Rewards to Redeem:</b> {max(available_rewards, 0)}</p>
         </div>
@@ -593,12 +602,6 @@ else:
                 save_data(st.session_state.db)
                 st.success("Reward redeemed! Enjoy treating yourself!")
                 st.rerun()
-
-        if st.button("Reset No-Buy Start Date"):
-            st.session_state.db["stats"]["no_buy_start_date"] = str(datetime.date.today())
-            save_data(st.session_state.db)
-            st.success("Reset start date to today.")
-            st.rerun()
 
     # --- ANALYTICS ---
     elif st.session_state.current_page == "Analytics":
