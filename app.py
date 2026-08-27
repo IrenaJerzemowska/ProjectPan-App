@@ -195,25 +195,58 @@ def get_pan_level(xp):
         return "Master of the Pan 👑", 500
 
 def estimate_pan_completion(category, capacity, unit, daily_uses):
-    if daily_uses <= 0 or capacity <= 0:
+    if daily_uses <= 0:
         return None, None, 0
         
     cat = category.lower()
-    if "foundation" in cat or "setting spray" in cat:
-        ml_per_use = 0.75
+    
+    # Community ProjectPan realistic tracking data baselines (days needed for full completion at 1 use/day)
+    if "lipstick" in cat:
+        days_needed_base = 730  # ~2 years average for bullet lipstick
+    elif "liquid lipstick" in cat:
+        days_needed_base = 270  # ~9 months
+    elif "lip gloss" in cat:
+        days_needed_base = 135  # ~4.5 months
+    elif "lip balm" in cat:
+        days_needed_base = 90   # ~3 months
+    elif "lip mask" in cat:
+        days_needed_base = 225  # ~7.5 months
+    elif "foundation" in cat:
+        days_needed_base = 150  # ~5 months (30ml)
     elif "concealer" in cat:
-        ml_per_use = 0.15
-    elif "lip" in cat:
-        ml_per_use = 0.04
+        days_needed_base = 225  # ~7.5 months
+    elif "powder" in cat:
+        days_needed_base = 300  # ~10 months
+    elif "setting spray" in cat:
+        days_needed_base = 120  # ~4 months
+    elif "contour" in cat:
+        days_needed_base = 300  # ~10 months
+    elif "cream blush" in cat or "blush" in cat and "cream" in cat:
+        days_needed_base = 365  # ~12 months
+    elif "powder blush" in cat or ("blush" in cat and "powder" in cat):
+        days_needed_base = 1095 # ~3 years
+    elif "cream highlighter" in cat:
+        days_needed_base = 540  # ~1.5 years
+    elif "powder highlighter" in cat or ("highlighter" in cat and "powder" in cat):
+        days_needed_base = 1460 # ~4 years
+    elif "eyeshadow palette" in cat:
+        days_needed_base = 1095 # ~3 years
     elif "mascara" in cat:
-        ml_per_use = 0.05
-    elif "powder" in cat or "blush" in cat or "contour" in cat or "highlighter" in cat:
-        ml_per_use = 0.08
+        days_needed_base = 120  # ~4 months (drying out / safety limit)
+    elif "eyeliner" in cat:
+        days_needed_base = 210  # ~7 months
+    elif "lip liner" in cat:
+        days_needed_base = 225  # ~7.5 months
+    elif "brow pen" in cat:
+        days_needed_base = 120  # ~4 months
+    elif "brow gel" in cat:
+        days_needed_base = 150  # ~5 months
     else:
-        ml_per_use = 0.1
+        days_needed_base = 250
 
-    total_applications_needed = capacity / ml_per_use
-    days_needed = int(total_applications_needed / daily_uses)
+    # Scale dynamically if daily_uses changes from 1.0 baseline
+    days_needed = int(days_needed_base / daily_uses)
+    total_applications_needed = days_needed_base  # Equivalent uses mapping
     
     completion_date = datetime.date.today() + datetime.timedelta(days=max(days_needed, 1))
     return days_needed, completion_date, total_applications_needed
@@ -609,23 +642,22 @@ else:
                     st.markdown(f'<div class="metric-box"><div class="metric-value">{cpu:.2f} {p["currency"]}</div><div class="metric-label">Cost / Use</div></div>', unsafe_allow_html=True)
 
                 st.markdown("<br>", unsafe_allow_html=True)
-                daily_uses_input = st.number_input("Estimated daily applications:", min_value=0.5, max_value=10.0, value=1.0, step=0.5, key=f"d_uses_{p['id']}")
+                daily_uses_input = st.number_input("Estimated daily applications:", min_value=0.1, max_value=5.0, value=1.0, step=0.1, key=f"d_uses_{p['id']}")
                 
-                if p.get("capacity", 0) > 0:
-                    d_needed, target_date, total_apps_needed = estimate_pan_completion(p["category"], p["capacity"], p["unit"], daily_uses_input)
-                    if d_needed and total_apps_needed > 0:
-                        formatted_date = target_date.strftime("%B %Y")
-                        progress_ratio = min(float(total_uses) / total_apps_needed, 1.0)
-                        
-                        st.markdown(f"""
-                        <div style="background-color: #f2ebfc; border-radius: 6px; padding: 0.8rem; margin-top: 10px; font-size: 0.88rem; color: #4a3468;">
-                            🔮 <strong>Timeline Forecast:</strong> Approx. <b>{d_needed} days</b> ({formatted_date}) to finish at {daily_uses_input} uses/day.
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        st.markdown("<br>", unsafe_allow_html=True)
-                        st.markdown(f"<p style='font-size:0.8rem; color:#6b5b7a; margin-bottom:4px;'><b>Visual Tracking Progress:</b> {total_uses} / ~{int(total_apps_needed)} estimated uses ({int(progress_ratio * 100)}%)</p>", unsafe_allow_html=True)
-                        st.progress(progress_ratio)
+                d_needed, target_date, total_apps_needed = estimate_pan_completion(p["category"], p.get("capacity", 10.0), p.get("unit", "ml"), daily_uses_input)
+                if d_needed and total_apps_needed > 0:
+                    formatted_date = target_date.strftime("%B %Y")
+                    progress_ratio = min(float(total_uses) / total_apps_needed, 1.0)
+                    
+                    st.markdown(f"""
+                    <div style="background-color: #f2ebfc; border-radius: 6px; padding: 0.8rem; margin-top: 10px; font-size: 0.88rem; color: #4a3468;">
+                        🔮 <strong>Timeline Forecast:</strong> Approx. <b>{d_needed} days</b> ({formatted_date}) to finish based on community ProjectPan data.
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.markdown(f"<p style='font-size:0.8rem; color:#6b5b7a; margin-bottom:4px;'><b>Visual Tracking Progress:</b> {total_uses} / ~{int(total_apps_needed)} baseline uses ({int(progress_ratio * 100)}%)</p>", unsafe_allow_html=True)
+                    st.progress(progress_ratio)
 
                 st.markdown("<br>", unsafe_allow_html=True)
                 col_add, col_btn = st.columns([2, 1])
