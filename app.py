@@ -659,3 +659,45 @@ else:
             <p style="margin:5px 0 0 0; font-size:0.95rem; color:#4a3468;"><b>Available Rewards to Redeem:</b> {max(available_rewards, 0)}</p>
         </div>
         """, unsafe_allow_html=True)
+
+    # --- BEAUTY STATS / ANALYTICS ---
+    elif st.session_state.current_page == "Analytics":
+        st.markdown("### Beauty Stats 🐈‍⬛")
+        
+        products = st.session_state.db.get("products", [])
+        empties = st.session_state.db.get("empties", [])
+        stats = st.session_state.db.get("stats", {})
+        
+        total_active = len(products)
+        total_empties = len(empties)
+        total_spend = sum(p.get("price", 0.0) for p in products)
+        
+        cat_counts = {}
+        for p in products:
+            c = p.get("category", "Uncategorized")
+            cat_counts[c] = cat_counts.get(c, 0) + 1
+            
+        st.markdown(f"""
+        <div class="vanity-card">
+            <h4 style="margin:0 0 0.8rem 0; font-family:'Playfair Display', serif;">Collection Overview</h4>
+            <p style="margin:0 0 0.4rem 0; font-size:0.95rem;">Active Products: <b>{total_active}</b></p>
+            <p style="margin:0 0 0.4rem 0; font-size:0.95rem;">Empties Graveyard Count: <b>{total_empties}</b></p>
+            <p style="margin:0; font-size:0.95rem;">Total Active Collection Spend: <b>{total_spend:.2f}</b></p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("#### Category Breakdown")
+        if not cat_counts:
+            st.info("No products in collection to categorize.")
+        else:
+            for cat_name, count in sorted(cat_counts.items(), key=lambda x: x[1], reverse=True):
+                st.markdown(f"<span style='font-size:0.9rem; color:#4a3468;'>• {cat_name.title()}: <b>{count}</b></span>", unsafe_allow_html=True)
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="vanity-card" style="background-color: #f7f3fd;">
+            <h4 style="margin:0 0 0.5rem 0; font-family:'Playfair Display', serif;">Gamification & Streaks</h4>
+            <p style="margin:0 0 0.4rem 0; font-size:0.95rem;">Current XP: <b>{stats.get('xp', 0)} XP</b></p>
+            <p style="margin:0; font-size:0.95rem;">Finished Lip Products: <b>{stats.get('finished_lip_products', 0)}</b></p>
+        </div>
+        """, unsafe_allow_html=True)
