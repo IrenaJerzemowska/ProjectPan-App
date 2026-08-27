@@ -377,7 +377,6 @@ else:
                         new_price = st.number_input("Price", min_value=0.0, value=float(p["price"]))
                         new_currency = st.selectbox("Currency", ["GBP", "PLN", "EUR", "USD"], index=["GBP", "PLN", "EUR", "USD"].index(p["currency"]) if p["currency"] in ["GBP", "PLN", "EUR", "USD"] else 0)
                         
-                        # Added and removed uses automation inside Edit form!
                         old_uses = p.get("total_uses", 0)
                         new_uses_input = st.number_input("Total Uses", min_value=0, value=int(old_uses))
 
@@ -390,7 +389,6 @@ else:
                             p["currency"] = new_currency
                             p["total_uses"] = int(new_uses_input)
                             
-                            # Automatically update XP based on added or removed uses (+5 XP per added use, -5 XP per removed use)
                             if uses_diff != 0:
                                 if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
                                 current_xp = st.session_state.db["stats"].get("xp", 0)
@@ -434,7 +432,6 @@ else:
                     }
                     st.session_state.db["products"].append(new_item)
                     
-                    # Automatically grant XP for initial uses if set on creation
                     if int(initial_uses) > 0:
                         if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
                         current_xp = st.session_state.db["stats"].get("xp", 0)
@@ -513,25 +510,29 @@ else:
                     st.progress(progress_ratio)
 
                 st.markdown("<br>", unsafe_allow_html=True)
-                col_add, col_btn = st.columns([2, 1])
-                with col_add:
-                    # Allow negative numbers or adjustments to handle both added and removed uses automatically
-                    use_adjustment = st.number_input("Adjust uses (+ add, - remove):", min_value=-50, max_value=50, value=1, key=f"uses_{p['id']}")
-                with col_btn:
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("Update Uses & XP", key=f"btn_{p['id']}"):
-                        if use_adjustment != 0:
-                            p["total_uses"] = max(p.get("total_uses", 0) + use_adjustment, 0)
+                
+                # Automated [+] and [-] buttons for uses and XP
+                st.markdown("<p style='font-size:0.85rem; color:#8c7aa9; margin-bottom:5px;'>Quick Use Counter:</p>", unsafe_allow_html=True)
+                col_btn_minus, col_uses_disp, col_btn_plus = st.columns([1, 2, 1])
+                with col_btn_minus:
+                    if st.button("➖ -1", key=f"minus_{p['id']}"):
+                        if p.get("total_uses", 0) > 0:
+                            p["total_uses"] = p.get("total_uses", 0) - 1
                             if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
                             current_xp = st.session_state.db["stats"].get("xp", 0)
-                            # Automatically add XP if uses increased, or remove XP if uses decreased
-                            st.session_state.db["stats"]["xp"] = max(current_xp + (use_adjustment * 5), 0)
+                            st.session_state.db["stats"]["xp"] = max(current_xp - 5, 0)
                             save_data(st.session_state.db)
-                            if use_adjustment > 0:
-                                st.success(f"Added {use_adjustment} use(s) and gained +{use_adjustment * 5} XP!")
-                            else:
-                                st.warning(f"Removed {abs(use_adjustment)} use(s) and deducted {abs(use_adjustment) * 5} XP.")
                             st.rerun()
+                with col_uses_disp:
+                    st.markdown(f"<div style='text-align: center; padding-top: 5px; font-weight: bold;'>{total_uses} uses</div>", unsafe_allow_html=True)
+                with col_btn_plus:
+                    if st.button("➕ +1", key=f"plus_{p['id']}"):
+                        p["total_uses"] = p.get("total_uses", 0) + 1
+                        if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
+                        current_xp = st.session_state.db["stats"].get("xp", 0)
+                        st.session_state.db["stats"]["xp"] = max(current_xp + 5, 0)
+                        save_data(st.session_state.db)
+                        st.rerun()
 
                 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -657,3 +658,33 @@ else:
             st.markdown(f'<div class="metric-box"><div class="metric-value">{total_empties}</div><div class="metric-label">Total Empties</div></div>', unsafe_allow_html=True)
         with col2:
             st.markdown(f'<div class="metric-box"><div class="metric-value">{total_spent:.2f}</div><div class="metric-label">Total Value</div></div>', unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # Extended analytics: favorite brands by quantity and category by total uses
+        if products:
+            # Brand counts
+            brand_counts = {}
+            for p in products:
+                b = p.get("brand", "Unknown")
+                brand_counts[b] = brand_counts.get(b, 0) + 1
+            sorted_brands = sorted(brand_counts.items(), key=lambda x: x[1], reverse=True)
+
+            # Category uses
+            category_uses = {}
+            for p in products:
+                c = p.get("category", "Uncategorized")
+                u = p.get("total_uses", 0)
+                category_uses[c] = category_uses.get(c, 0) + u
+            sorted_categories = sorted(category_uses.items(), key=lambda x: x[1], reverse=True)
+
+            fav_brand_name, fav_brand_count = sorted_brands[0]
+            top_cat_name, top_cat_uses = sorted_categories[0] if sorted_categories else ("None", 0)
+
+            st.markdown(f"""
+            <div class="vanity-card">
+                <h4 style="margin:0 0 0.5rem 0; font-family:'Playfair Display', serif; color:#4a3468;">Brand & Category Insights</h4>
+                <p style="margin:0 0 0.3rem 0; font-size:0.9rem;">👑 <b>Favorite Brand (Most Items):</b> {fav_brand_name} ({fav_brand_count} items)</p>
+                <p style="margin:0; font-size:0.9rem;">🔥 <b>Top Category by Uses:</b> {top_cat_name} ({top_cat_uses} total uses)</p>
+            </div>
+            """, unsafe_allow_html=True)
