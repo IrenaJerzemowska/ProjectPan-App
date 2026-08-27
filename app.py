@@ -8,7 +8,7 @@ from PIL import Image
 import io
 
 # ---------------------------------------------------------
-# Konfiguracja Strony i Czysty CSS
+# Page Configuration & Global Styles
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="Vanity Sanctuary",
@@ -21,13 +21,11 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
 
-    /* Tło całej aplikacji */
     .stApp {
         background-color: #d8cde9 !important;
         font-family: 'Lora', serif;
     }
 
-    /* Szerokość kontenera na środku ekranu */
     .main .block-container {
         max-width: 440px !important;
         padding-top: 1.5rem !important;
@@ -36,7 +34,6 @@ st.markdown("""
         padding-right: 1rem !important;
     }
 
-    /* Nagłówek górny */
     .sanctuary-header {
         background: #ffffff;
         border-radius: 4px;
@@ -62,58 +59,60 @@ st.markdown("""
         margin-bottom: 0;
     }
 
-    /* Odstępy w siatce kafelków */
     div[data-testid="stHorizontalBlock"] {
         gap: 14px !important;
         margin-bottom: 14px !important;
     }
 
-    /* PRECYZYJNE WYMUSZENIE DUŻYCH KWADRATOWYCH PRZYCISKÓW */
-    div[data-testid="stElementToolbar"] { display: none; }
-    
-    .stButton > button {
+    /* Ukrywamy domyślny wygląd i marginesy przycisków wewnątrz kolumn */
+    div[data-testid="column"] .stButton {
+        width: 100%;
+        margin: 0;
+    }
+
+    /* Wymuszamy idealny kwadrat z dużym padingiem dla przycisku */
+    div[data-testid="column"] button {
         background-color: #ffffff !important;
         border: 1px solid #e2d8ee !important;
-        border-radius: 4px !important;
+        border-radius: 6px !important;
         width: 100% !important;
-        height: 175px !important; /* Sztywna duża wysokość */
-        min-height: 175px !important;
+        aspect-ratio: 1 / 1 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 1rem 0.5rem !important;
+        box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06) !important;
         display: flex !important;
         flex-direction: column !important;
-        justify-content: center !important;
+        justify-content: space-between !important;
         align-items: center !important;
-        box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06) !important;
         transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-        padding: 10px !important;
     }
 
-    .stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 16px rgba(100, 80, 130, 0.12) !important;
-        border-color: #cbbba6 !important;
+    div[data-testid="column"] button:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 18px rgba(100, 80, 130, 0.12) !important;
         background-color: #ffffff !important;
     }
 
-    /* Wnętrze przycisku: Napisy i emotki */
-    .stButton > button div {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-
-    .stButton > button p {
+    /* Wygląd nagłówka w kwadracie */
+    .tile-title {
         font-family: 'Playfair Display', serif !important;
-        font-size: 1.35rem !important;
+        font-size: 1.3rem !important;
         font-weight: 700 !important;
-        line-height: 1.25 !important;
         color: #554a60 !important;
+        line-height: 1.2 !important;
         text-align: center !important;
-        white-space: pre-wrap !important;
-        margin: 0 !important;
+        margin-top: 0.4rem !important;
     }
 
-    /* Karta z cytatem na dole */
+    /* DUŻA EMOTKA W ŚRODKU */
+    .tile-icon {
+        font-size: 3.8rem !important;
+        line-height: 1 !important;
+        margin-bottom: 0.4rem !important;
+        display: block !important;
+    }
+
     .quote-card {
         background: #ffffff;
         border: 2px solid #3a3342 !important;
@@ -142,7 +141,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# Baza Danych i Stan Strony
+# Data Storage & State Initialization
 # ---------------------------------------------------------
 DATA_FILE = "vanity_data.json"
 
@@ -152,8 +151,6 @@ CATEGORIES = [
     "eyeliner", "mascara", "lip liner", "lip mask", 
     "setting spray", "brow gel", "brow pen"
 ]
-
-LIP_CATEGORIES = ["lip gloss", "lipstick", "lip liner", "lip mask"]
 
 def load_data():
     if os.path.exists(DATA_FILE):
@@ -174,18 +171,8 @@ if "db" not in st.session_state:
 if "current_page" not in st.session_state:
     st.session_state.current_page = "Home"
 
-def calculate_days_owned(purchase_date_str):
-    try:
-        p_date = datetime.datetime.strptime(purchase_date_str, "%Y-%m-%d").date()
-        return max((datetime.date.today() - p_date).days, 0)
-    except Exception:
-        return 0
-
-def calculate_cost_per_use(price, total_uses):
-    return price if total_uses <= 0 else price / total_uses
-
 # ---------------------------------------------------------
-# Nagłówek
+# Header Block
 # ---------------------------------------------------------
 st.markdown("""
 <div class="sanctuary-header">
@@ -195,35 +182,39 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# STRONA GŁÓWNA
+# HOME PAGE (IDEALNE KWADRATOWE KAFELKI Z DUŻYMI EMOTKAMI)
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
+
+    # Pomocnicza funkcja generująca html wewnątrz st.button
+    def render_tile(title_html, emoji):
+        return f'<span class="tile-title">{title_html}</span><span class="tile-icon">{emoji}</span>'
 
     # Rząd 1
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Your\nCollection\n\n\n🦇", key="btn_coll"):
+        if st.button(render_tile("Your<br>Collection", "🦇"), key="btn_coll"):
             st.session_state.current_page = "Collection"
             st.rerun()
 
     with col2:
-        if st.button("Project\nPan\n\n\n🌕", key="btn_pan"):
+        if st.button(render_tile("Project<br>Pan", "🌕"), key="btn_pan"):
             st.session_state.current_page = "Project Pan"
             st.rerun()
 
     # Rząd 2
     col3, col4 = st.columns(2)
     with col3:
-        if st.button("No - Buy\n& Rewards\n\n\n🌸", key="btn_nobuy"):
+        if st.button(render_tile("No - Buy<br>& Rewards", "🌸"), key="btn_nobuy"):
             st.session_state.current_page = "No-Buy Rules"
             st.rerun()
 
     with col4:
-        if st.button("Beauty\nstats\n\n\n🐈‍⬛", key="btn_stats"):
+        if st.button(render_tile("Beauty<br>stats", "🐈‍⬛"), key="btn_stats"):
             st.session_state.current_page = "Analytics"
             st.rerun()
 
-    # Ramka z cytatem
+    # Quote Box
     st.markdown("""
     <div class="quote-card">
         <p>Use what you love.<br>Finish what you start.</p>
@@ -231,7 +222,7 @@ if st.session_state.current_page == "Home":
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# STRONY WEWNĘTRZNE
+# INNER PAGES
 # ---------------------------------------------------------
 else:
     if st.button("← Back to Menu"):
@@ -246,62 +237,14 @@ else:
             st.session_state.current_page = "Add Product"
             st.rerun()
 
-        products = st.session_state.db.get("products", [])
-        if not products:
-            st.info("Your collection is currently empty.")
-        else:
-            filter_cat = st.selectbox("Category Filter", ["All Categories"] + CATEGORIES)
-            filtered_products = [p for p in products if filter_cat == "All Categories" or p["category"].lower() == filter_cat.lower()]
-
-            for p in reversed(filtered_products):
-                days = calculate_days_owned(p["purchase_date"])
-                st.markdown(f"""
-                <div class="vanity-card">
-                    <h4>{p['brand']} — {p['name']}</h4>
-                    <p>Category: {p['category']} | Shade: {p['shade']}</p>
-                    <p>Price: {p['price']:.2f} {p['currency']} | Days: {days}</p>
-                </div>
-                """, unsafe_allow_html=True)
-
     elif st.session_state.current_page == "Project Pan":
         st.markdown("### Project Pan")
-        products = [p for p in st.session_state.db.get("products", []) if p.get("in_project_pan", False)]
-        if not products:
-            st.info("No active items in Project Pan.")
-        else:
-            for p in products:
-                st.write(f"**{p['brand']} - {p['name']}**")
 
     elif st.session_state.current_page == "No-Buy Rules":
         st.markdown("### No - Buy & Rewards")
-        stats = st.session_state.db.get("stats", {})
-        st.write(f"Finished lip items: {stats.get('finished_lip_products', 0)}")
 
     elif st.session_state.current_page == "Analytics":
         st.markdown("### Beauty Stats")
-        st.write("Statistics overview.")
 
     elif st.session_state.current_page == "Add Product":
         st.markdown("### Add Product")
-        with st.form("add_form", clear_on_submit=True):
-            name = st.text_input("Product Name *")
-            brand = st.text_input("Brand *")
-            shade = st.text_input("Shade")
-            category = st.selectbox("Category *", CATEGORIES)
-            price = st.number_input("Price *", min_value=0.0, value=15.0)
-            currency = st.selectbox("Currency *", ["GBP", "PLN", "EUR", "USD"])
-            purchase_date = st.date_input("Purchase Date *", datetime.date.today())
-            in_pan = st.checkbox("Add to Project Pan immediately", value=True)
-
-            if st.form_submit_button("Save to Collection ✨"):
-                if name and brand:
-                    new_item = {
-                        "id": str(datetime.datetime.now().timestamp()),
-                        "name": name, "brand": brand, "shade": shade if shade else "N/A",
-                        "category": category, "price": float(price), "currency": currency,
-                        "purchase_date": str(purchase_date), "total_uses": 0, "in_project_pan": in_pan
-                    }
-                    st.session_state.db["products"].append(new_item)
-                    save_data(st.session_state.db)
-                    st.session_state.current_page = "Collection"
-                    st.rerun()
