@@ -9,10 +9,10 @@ import io
 from collections import Counter
 
 # ---------------------------------------------------------
-# Page Configuration & Gothic Theme
+# Page Configuration & Modern Yennefer-Lilac Theme
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="Project Pan — Gothic Vanity",
+    page_title="Vanity Sanctuary",
     page_icon="🔮",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -20,87 +20,130 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
+    /* Main background & base typography */
     .stApp {
-        background-color: #0d0814;
-        color: #e2d9f3;
-        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #0b0c10;
+        color: #e5e7eb;
+        font-family: 'Inter', sans-serif;
     }
 
+    /* Headings - Yennefer Elegance */
     h1, h2, h3, h4, h5, h6 {
         font-family: 'Cinzel', serif !important;
-        color: #d8b4fe !important;
-        letter-spacing: 1px;
+        color: #f3e8ff !important;
+        font-weight: 600 !important;
+        letter-spacing: 1.5px !important;
     }
 
-    .gothic-header {
-        background: linear-gradient(135deg, #1f1035 0%, #2e1052 50%, #120722 100%);
-        border: 1px solid #6b21a8;
-        box-shadow: 0 4px 20px rgba(147, 51, 234, 0.25);
-        padding: 1.5rem;
-        border-radius: 16px;
+    /* Header Banner */
+    .yennefer-header {
+        background: linear-gradient(180deg, #181922 0%, #0b0c10 100%);
+        border-bottom: 1px solid #3b2d54;
+        padding: 2rem 1rem;
         text-align: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
     }
 
-    .gothic-header h1 {
-        font-size: 2.2rem !important;
-        margin: 0 !important;
-        text-shadow: 0 0 10px rgba(192, 132, 252, 0.5);
+    .yennefer-header h1 {
+        font-size: 2.4rem !important;
+        margin-bottom: 0.3rem !important;
+        color: #e9d5ff !important;
     }
 
+    .yennefer-header p {
+        color: #a855f7;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin: 0;
+    }
+
+    /* Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: #12091f;
-        border-right: 1px solid #3b0764;
+        background-color: #111318;
+        border-right: 1px solid #232733;
     }
 
+    /* Minimalist Cards */
     .vanity-card {
-        background-color: #1a0f2e;
-        border: 1px solid #4c1d95;
-        border-radius: 14px;
-        padding: 1.25rem;
-        margin-bottom: 1.5rem;
+        background-color: #151720;
+        border: 1px solid #2d2b3d;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.2rem;
+        transition: border 0.2s ease;
     }
 
-    .gothic-badge {
-        background-color: #3b0764;
-        color: #f3e8ff;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 0.8rem;
-        border: 1px solid #7e22ce;
-        display: inline-block;
-        font-weight: 600;
+    .vanity-card:hover {
+        border-color: #7e22ce;
     }
 
-    .metric-box {
-        background-color: #24123e;
+    /* Badges */
+    .lilac-badge {
+        background-color: #2e1d40;
+        color: #d8b4fe;
+        padding: 3px 10px;
+        border-radius: 4px;
+        font-size: 0.75rem;
         border: 1px solid #5b21b6;
-        padding: 0.75rem;
-        border-radius: 10px;
+        letter-spacing: 1px;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    /* Metric Display Box */
+    .metric-box {
+        background-color: #1a1c27;
+        border: 1px solid #2e3346;
+        padding: 1rem;
+        border-radius: 6px;
         text-align: center;
     }
     .metric-box .metric-value {
-        font-size: 1.3rem;
-        font-weight: 700;
+        font-size: 1.5rem;
+        font-weight: 600;
         color: #c084fc;
         font-family: 'Cinzel', serif;
     }
     .metric-box .metric-label {
-        font-size: 0.75rem;
-        color: #a855f7;
+        font-size: 0.7rem;
+        color: #9ca3af;
         text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 4px;
     }
 
+    /* Buttons */
     .stButton > button {
-        background: linear-gradient(135deg, #6b21a8 0%, #3b0764 100%);
-        color: #f3e8ff;
-        border: 1px solid #a855f7;
-        border-radius: 8px;
-        font-family: 'Cinzel', serif;
-        font-weight: 600;
+        background-color: #1f1d2b;
+        color: #e9d5ff !important;
+        border: 1px solid #6b21a8;
+        border-radius: 4px;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        transition: all 0.2s ease;
         width: 100%;
+    }
+
+    .stButton > button:hover {
+        background-color: #6b21a8;
+        color: #ffffff !important;
+        border-color: #c084fc;
+    }
+
+    /* Form Inputs Contrast Fix */
+    div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {
+        background-color: #151720 !important;
+        border-color: #2d3142 !important;
+        color: #f3e8ff !important;
+    }
+
+    hr {
+        border-color: #232733 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -141,13 +184,12 @@ if "stats" not in st.session_state.db:
     st.session_state.db["stats"] = {"finished_lip_products": 0, "penalties": 0}
 
 # ---------------------------------------------------------
-# Helper Functions
+# Helpers
 # ---------------------------------------------------------
 def calculate_days_owned(purchase_date_str):
     try:
         p_date = datetime.datetime.strptime(purchase_date_str, "%Y-%m-%d").date()
-        today = datetime.date.today()
-        return max((today - p_date).days, 0)
+        return max((datetime.date.today() - p_date).days, 0)
     except Exception:
         return 0
 
@@ -167,32 +209,32 @@ def image_to_base64(uploaded_file):
 # Header & Navigation
 # ---------------------------------------------------------
 st.markdown("""
-<div class="gothic-header">
-    <h1>🔮 Gothic Vanity & Project Pan 🔮</h1>
-    <p>5 Finished Lippies = 1 New Allowed. Respect the Rule or Face Penalties!</p>
+<div class="yennefer-header">
+    <h1>VANITY SANCTUARY</h1>
+    <p>Minimalist Inventory & Project Pan</p>
 </div>
 """, unsafe_allow_html=True)
 
-st.sidebar.markdown("<h2 style='text-align:center;'>🕸️ Sanctuary 🕸️</h2>", unsafe_allow_html=True)
+st.sidebar.markdown("<h3 style='text-align:center; font-size:1.1rem;'>NAVIGATION</h3>", unsafe_allow_html=True)
 nav = st.sidebar.radio(
-    "Navigation", 
-    ["✨ Full Collection", "🧪 Project Pan Sanctuary", "🕯️ No-Buy & Penalties", "📊 Gothic Analytics", "➕ Add New Potion"]
+    "", 
+    ["Collection", "Project Pan", "No-Buy Rules", "Analytics", "Add Product"]
 )
 
 # ---------------------------------------------------------
-# TAB 1: FULL COLLECTION
+# TAB 1: COLLECTION
 # ---------------------------------------------------------
-if nav == "✨ Full Collection":
-    st.markdown("### 🖤 Full Vanity Collection")
+if nav == "Collection":
+    st.markdown("### Collection Overview")
     products = st.session_state.db.get("products", [])
 
     if not products:
-        st.info("Your vanity is empty. Click on '➕ Add New Potion' to add cosmetics!")
+        st.info("Your collection is currently empty.")
     else:
-        filter_cat = st.selectbox("Filter Category:", ["All Categories"] + CATEGORIES)
+        filter_cat = st.selectbox("Category Filter", ["All Categories"] + CATEGORIES)
         filtered_products = [p for p in products if filter_cat == "All Categories" or p["category"].lower() == filter_cat.lower()]
 
-        st.markdown(f"**Showing `{len(filtered_products)}` potion(s)**")
+        st.caption(f"Showing {len(filtered_products)} item(s)")
 
         for p in reversed(filtered_products):
             days = calculate_days_owned(p["purchase_date"])
@@ -200,59 +242,60 @@ if nav == "✨ Full Collection":
 
             st.markdown(f"""
             <div class="vanity-card">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
                     <div>
-                        <h3 style="margin:0;">{p['brand']} — {p['name']}</h3>
-                        <p style="margin:2px 0; color:#c084fc;">Shade: {p['shade']}</p>
+                        <h4 style="margin:0; font-size:1.1rem; color:#f3e8ff;">{p['brand']} <span style="font-weight:300; color:#d8b4fe;">— {p['name']}</span></h4>
+                        <span style="font-size:0.85rem; color:#9ca3af;">Shade: {p['shade']}</span>
                     </div>
-                    <span class="gothic-badge">{p['category'].upper()}</span>
+                    <span class="lilac-badge">{p['category']}</span>
                 </div>
             """, unsafe_allow_html=True)
 
-            col_img, col_info = st.columns([1, 1.8])
+            col_img, col_info = st.columns([1, 2])
             with col_img:
                 if p.get("image_b64"):
-                    st.markdown(f'<img src="data:image/png;base64,{p["image_b64"]}" style="width:100%; border-radius:10px; border:1px solid #6b21a8;">', unsafe_allow_html=True)
+                    st.markdown(f'<img src="data:image/png;base64,{p["image_b64"]}" style="width:100%; border-radius:4px; border:1px solid #2d3142;">', unsafe_allow_html=True)
                 else:
-                    st.markdown('<div style="width:100%; aspect-ratio:1; background-color:#2a1745; border-radius:10px; display:flex; align-items:center; justify-content:center;"><span style="font-size:2rem;">🔮</span></div>', unsafe_allow_html=True)
+                    st.markdown('<div style="width:100%; height:110px; background-color:#1a1c27; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#4b5563; font-size:0.8rem; border:1px solid #2d3142;">NO IMAGE</div>', unsafe_allow_html=True)
 
             with col_info:
                 st.markdown(f"""
-                **Price:** `{p['price']:.2f} {p['currency']}`  
-                **Age:** `{days}` days owned  
-                **Total Uses:** `{p.get('total_uses', 0)}`  
-                **Cost per Use:** `{cpu:.2f} {p['currency']}`  
+                <div style="font-size:0.88rem; line-height:1.6; color:#d1d5db;">
+                    <strong>Price:</strong> {p['price']:.2f} {p['currency']}<br>
+                    <strong>Age:</strong> {days} days owned<br>
+                    <strong>Total Uses:</strong> {p.get('total_uses', 0)}<br>
+                    <strong>Cost per Use:</strong> {cpu:.2f} {p['currency']}
+                </div>
                 """, unsafe_allow_html=True)
 
+            st.markdown("<br>", unsafe_allow_html=True)
             c1, c2 = st.columns(2)
             with c1:
                 is_pan = p.get("in_project_pan", False)
-                btn_label = "Remove from Pan" if is_pan else "Add to Project Pan 🧪"
+                btn_label = "Remove from Project Pan" if is_pan else "Add to Project Pan"
                 if st.button(btn_label, key=f"pan_{p['id']}"):
                     p["in_project_pan"] = not is_pan
                     save_data(st.session_state.db)
                     st.rerun()
             with c2:
-                if st.button("🏆 Mark as FINISHED (Panned!)", key=f"fin_{p['id']}"):
+                if st.button("Mark as Finished ✨", key=f"fin_{p['id']}"):
                     if p["category"].lower() in LIP_CATEGORIES:
                         st.session_state.db["stats"]["finished_lip_products"] = st.session_state.db["stats"].get("finished_lip_products", 0) + 1
                     st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
                     save_data(st.session_state.db)
-                    st.balloons()
-                    st.success(f"Finished {p['name']}! Great job!")
                     st.rerun()
 
             st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# TAB 2: PROJECT PAN SANCTUARY
+# TAB 2: PROJECT PAN
 # ---------------------------------------------------------
-elif nav == "🧪 Project Pan Sanctuary":
-    st.markdown("### 🧪 Active Project Pan Items")
+elif nav == "Project Pan":
+    st.markdown("### Active Project Pan")
     products = [p for p in st.session_state.db.get("products", []) if p.get("in_project_pan", False)]
 
     if not products:
-        st.info("No items in Project Pan! Select products from '✨ Full Collection'.")
+        st.info("No active items in Project Pan.")
     else:
         for p in products:
             days = calculate_days_owned(p["purchase_date"])
@@ -261,79 +304,73 @@ elif nav == "🧪 Project Pan Sanctuary":
 
             st.markdown(f"""
             <div class="vanity-card">
-                <h3 style="margin:0;">{p['brand']} — {p['name']} ({p['shade']})</h3>
+                <h4 style="margin:0 0 1rem 0;">{p['brand']} — {p['name']} <span style="color:#a855f7; font-size:0.9rem;">({p['shade']})</span></h4>
             """, unsafe_allow_html=True)
 
             m1, m2, m3 = st.columns(3)
             with m1:
-                st.markdown(f'<div class="metric-box"><div class="metric-value">{days} d</div><div class="metric-label">Days Owned</div></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="metric-box"><div class="metric-value">{days}</div><div class="metric-label">Days Owned</div></div>', unsafe_allow_html=True)
             with m2:
                 st.markdown(f'<div class="metric-box"><div class="metric-value">{total_uses}</div><div class="metric-label">Total Uses</div></div>', unsafe_allow_html=True)
             with m3:
                 st.markdown(f'<div class="metric-box"><div class="metric-value">{cpu:.2f} {p["currency"]}</div><div class="metric-label">Cost / Use</div></div>', unsafe_allow_html=True)
 
+            st.markdown("<br>", unsafe_allow_html=True)
             col_add, col_btn = st.columns([2, 1])
             with col_add:
-                add_uses = st.number_input("Add uses today:", min_value=1, max_value=10, value=1, key=f"uses_{p['id']}")
+                add_uses = st.number_input("Log Usage Today:", min_value=1, max_value=10, value=1, key=f"uses_{p['id']}")
             with col_btn:
                 st.markdown("<br>", unsafe_allow_html=True)
-                if st.button("➕ Log Uses", key=f"btn_{p['id']}"):
+                if st.button("Log Usage", key=f"btn_{p['id']}"):
                     p["total_uses"] = p.get("total_uses", 0) + add_uses
                     save_data(st.session_state.db)
-                    st.success("Logged!")
                     st.rerun()
 
             st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# TAB 3: NO-BUY & PENALTY SYSTEM
+# TAB 3: NO-BUY RULES
 # ---------------------------------------------------------
-elif nav == "🕯️ No-Buy & Penalties":
-    st.markdown("### 🕯️ Beauty No-Buy & Rules Tracker")
-    settings = st.session_state.db.get("settings", {})
+elif nav == "No-Buy Rules":
+    st.markdown("### No-Buy & Rules Tracker")
     stats = st.session_state.db.get("stats", {})
 
-    # 5 OUT = 1 IN RULE
     fin_lips = stats.get("finished_lip_products", 0)
     earned_tokens = fin_lips // 5
     lips_needed = 5 - (fin_lips % 5)
 
-    st.markdown("#### 💄 The 5-to-1 Lippies Rule")
+    st.markdown("#### The 5-Out = 1-In Rule (Lippies)")
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown(f'<div class="metric-box"><div class="metric-value">{fin_lips}</div><div class="metric-label">Total Lippies Finished</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-box"><div class="metric-value">{fin_lips}</div><div class="metric-label">Finished Lippies</div></div>', unsafe_allow_html=True)
     with col2:
-        st.markdown(f'<div class="metric-box"><div class="metric-value">{earned_tokens}</div><div class="metric-label">New Lip Credits Earned 🎟️</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-box"><div class="metric-value">{earned_tokens}</div><div class="metric-label">Purchases Allowed</div></div>', unsafe_allow_html=True)
     with col3:
-        st.markdown(f'<div class="metric-box"><div class="metric-value">{lips_needed}</div><div class="metric-label">Lippies to Next Credit</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-box"><div class="metric-value">{lips_needed}</div><div class="metric-label">Left to Next Allowance</div></div>', unsafe_allow_html=True)
 
     st.markdown("---")
 
-    # PENALTIES SECTION
-    st.markdown("#### 💀 Penalty & Sin Counter")
+    st.markdown("#### Sins & Penalty Tracking")
     penalties = stats.get("penalties", 0)
     
     p1, p2 = st.columns(2)
     with p1:
-        st.markdown(f'<div class="metric-box" style="border-color:#b91c1c;"><div class="metric-value" style="color:#ef4444;">{penalties}</div><div class="metric-label">Penalty Points (Sins) 🩸</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-box" style="border-color:#7f1d1d;"><div class="metric-value" style="color:#f87171;">{penalties}</div><div class="metric-label">Penalty Points</div></div>', unsafe_allow_html=True)
     with p2:
-        status_text = "✨ Pure Angel" if penalties == 0 else "🖤 Vanity Sinner"
-        st.markdown(f'<div class="metric-box"><div class="metric-value">{status_text}</div><div class="metric-label">Current Vanity Status</div></div>', unsafe_allow_html=True)
-
-    if penalties > 0:
-        st.error(f"⚠️ You have {penalties} penalty points! Ban on new purchases extended!")
+        status_text = "Clean Streak" if penalties == 0 else "Rules Broken"
+        st.markdown(f'<div class="metric-box"><div class="metric-value">{status_text}</div><div class="metric-label">Status</div></div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# TAB 4: GOTHIC ANALYTICS
+# TAB 4: ANALYTICS
 # ---------------------------------------------------------
-elif nav == "📊 Gothic Analytics":
-    st.markdown("### 🕸️ Vanity Analytics & Smart Suggestions")
+elif nav == "Analytics":
+    st.markdown("### Collection Analytics")
     products = st.session_state.db.get("products", [])
 
     if not products:
-        st.info("No products available.")
+        st.info("No data to analyze.")
     else:
-        st.markdown("#### 🦇 Priority: Use Me First! (Oldest Products)")
+        st.markdown("#### Priority Items (Oldest in Collection)")
         sorted_by_age = sorted(products, key=lambda x: calculate_days_owned(x["purchase_date"]), reverse=True)[:4]
         
         cols = st.columns(len(sorted_by_age))
@@ -341,19 +378,19 @@ elif nav == "📊 Gothic Analytics":
             days = calculate_days_owned(p["purchase_date"])
             with cols[idx]:
                 st.markdown(f"""
-                <div class="vanity-card" style="border-color:#e11d48;">
-                    <span class="gothic-badge" style="background:#881337;">#{idx+1} OLDEST</span>
-                    <h4 style="margin:5px 0;">{p['brand']}</h4>
-                    <p style="font-size:0.85rem; margin:0;">{p['name']}</p>
-                    <p style="color:#fda4af; font-weight:bold; font-size:0.9rem;">{days} days old!</p>
+                <div class="vanity-card" style="padding:1rem;">
+                    <span class="lilac-badge">#{idx+1} OLDEST</span>
+                    <h5 style="margin:0.5rem 0 0.2rem 0; font-size:0.95rem;">{p['brand']}</h5>
+                    <p style="font-size:0.8rem; color:#9ca3af; margin:0;">{p['name']}</p>
+                    <p style="color:#c084fc; font-weight:600; font-size:0.85rem; margin-top:0.4rem;">{days} days old</p>
                 </div>
                 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# TAB 5: ADD NEW POTION (WITH PENALTY CHECK)
+# TAB 5: ADD PRODUCT
 # ---------------------------------------------------------
-elif nav == "➕ Add New Potion":
-    st.markdown("### 🔮 Add a New Potion")
+elif nav == "Add Product":
+    st.markdown("### Add New Product")
     stats = st.session_state.db.get("stats", {})
     fin_lips = stats.get("finished_lip_products", 0)
     earned_tokens = fin_lips // 5
@@ -361,31 +398,29 @@ elif nav == "➕ Add New Potion":
     with st.form("add_form", clear_on_submit=True):
         name = st.text_input("Product Name *")
         brand = st.text_input("Brand *")
-        shade = st.text_input("Shade / Color")
+        shade = st.text_input("Shade")
         category = st.selectbox("Category *", CATEGORIES)
         
         c1, c2 = st.columns(2)
         with c1:
-            price = st.number_input("Price *", min_value=0.0, value=20.0)
-            currency = st.selectbox("Currency *", ["PLN", "GBP"])
+            price = st.number_input("Price *", min_value=0.0, value=15.0)
+            currency = st.selectbox("Currency *", ["GBP", "PLN", "EUR", "USD"])
             purchase_date = st.date_input("Purchase Date *", datetime.date.today())
         with c2:
-            capacity = st.number_input("Capacity / Size", min_value=0.0, value=30.0)
+            capacity = st.number_input("Capacity", min_value=0.0, value=10.0)
             unit = st.selectbox("Unit", ["ml", "g", "items"])
-            daily_uses = st.number_input("Target Daily Uses", min_value=0.1, value=1.0)
 
-        in_pan = st.checkbox("Add directly to Project Pan?", value=True)
-        uploaded_img = st.file_uploader("Upload Photo", type=["jpg", "jpeg", "png"])
+        in_pan = st.checkbox("Add to Project Pan immediately", value=True)
+        uploaded_img = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
 
-        if st.form_submit_button("✨ Add to Vanity"):
+        if st.form_submit_button("Add to Sanctuary"):
             if name and brand:
-                # Check penalty rule for lip products
                 if category.lower() in LIP_CATEGORIES:
                     if earned_tokens > 0:
-                        st.warning("You used 1 New Lip Credit to buy this product!")
+                        st.info("Used 1 Lip Credit for this purchase.")
                     else:
                         st.session_state.db["stats"]["penalties"] = st.session_state.db["stats"].get("penalties", 0) + 1
-                        st.error("🚨 PENALTY APPLIED! You bought a lip product without finishing 5 first! 1 Penalty Point added!")
+                        st.warning("Penalty recorded: Purchased a lip product without 5 prior finishes.")
 
                 img_b64 = image_to_base64(uploaded_img) if uploaded_img else None
                 new_item = {
@@ -393,11 +428,16 @@ elif nav == "➕ Add New Potion":
                     "name": name, "brand": brand, "shade": shade if shade else "N/A",
                     "category": category, "price": float(price), "currency": currency,
                     "purchase_date": str(purchase_date), "capacity": float(capacity),
-                    "unit": unit, "daily_uses": float(daily_uses), "total_uses": 0,
-                    "in_project_pan": in_pan, "image_b64": img_b64
+                    "unit": unit, "total_uses": 0, "in_project_pan": in_pan, "image_b64": img_b64
                 }
                 st.session_state.db["products"].append(new_item)
                 save_data(st.session_state.db)
-                st.success(f"Added '{brand} - {name}'!")
+                st.success(f"Added {brand} - {name}")
+                st.rerun()
             else:
-                st.error("Fill in Name & Brand!")
+                st.error("Please enter Name and Brand.")
+
+
+    
+     
+
