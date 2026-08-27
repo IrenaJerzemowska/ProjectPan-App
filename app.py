@@ -778,7 +778,7 @@ else:
                     st.rerun()
 
     # --- NO-BUY RULES & REWARDS ---
-    elif st.session_state.current_page == "No-Buy Rules":
+    elif st.session_state.current_page == "No-Buy & Rewards":
         st.markdown("### No-Buy & Rewards 🌸")
         
         if st.session_state.get("show_lip_reward_banner", False):
