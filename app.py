@@ -8,7 +8,7 @@ from PIL import Image
 import io
 
 # ---------------------------------------------------------
-# Page Configuration & Visual Theme
+# Page Configuration & Clean Aesthetic Theme
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="Vanity Sanctuary",
@@ -19,122 +19,123 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,400&family=Space+Grotesk:wght@300;400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
 
-    /* Dreamy Pastel Background */
+    /* Clean Solid Lilac Background */
     .stApp {
-        background-color: #dfd5f0;
-        background-image: radial-gradient(rgba(255, 255, 255, 0.85) 2px, transparent 20px), radial-gradient(rgba(255, 255, 255, 0.85) 1.5px, transparent 15px);
-        background-size: 70px 70px, 35px 35px;
-        background-position: 0 0, 18px 18px;
+        background-color: #dcd0f0 !important;
         color: #382a4b;
-        font-family: 'Space Grotesk', sans-serif;
+        font-family: 'Lora', serif;
     }
 
-    /* Title Styling */
+    /* Header Styling */
     .sanctuary-header {
-        background: rgba(255, 255, 255, 0.92);
+        background: #ffffff;
         border-radius: 4px;
-        padding: 2rem 1rem;
+        padding: 2.2rem 1rem;
         text-align: center;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(160, 140, 190, 0.08);
+        margin-bottom: 1.8rem;
+        box-shadow: 0 4px 15px rgba(120, 100, 150, 0.05);
     }
 
     .sanctuary-header h1 {
         font-family: 'Playfair Display', serif !important;
-        font-size: 2.3rem !important;
-        color: #332d3b !important;
+        font-size: 2.5rem !important;
+        color: #3a3342 !important;
         margin: 0 !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         letter-spacing: -0.5px;
     }
 
     .sanctuary-header p {
-        color: #b5a8c5;
-        font-size: 1.15rem;
+        color: #b5a4c9;
+        font-size: 1.25rem;
         font-family: 'Playfair Display', serif;
         font-style: italic;
-        margin-top: 0.4rem;
+        margin-top: 0.3rem;
         margin-bottom: 0;
         font-weight: 400;
     }
 
-    /* Grid Tile Buttons */
-    .stButton > button {
-        background: rgba(255, 255, 255, 0.95) !important;
+    /* Uniform Grid Tile Buttons */
+    div[data-testid="column"] .stButton > button {
+        background: #ffffff !important;
         border: 2px solid #ffffff !important;
-        border-radius: 6px !important;
-        color: #382a4b !important;
+        border-radius: 4px !important;
+        color: #4a4253 !important;
         font-family: 'Playfair Display', serif !important;
-        font-size: 1.25rem !important;
-        font-weight: 600 !important;
-        padding: 1.8rem 0.5rem !important;
-        height: auto !important;
-        min-height: 160px !important;
-        box-shadow: 0 6px 18px rgba(140, 120, 170, 0.08) !important;
-        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+        font-size: 1.35rem !important;
+        font-weight: 700 !important;
+        height: 180px !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 4px 12px rgba(130, 110, 160, 0.06) !important;
+        transition: transform 0.15s ease-in-out !important;
+        white-space: pre-wrap !important;
+        line-height: 1.2 !important;
     }
 
-    .stButton > button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 22px rgba(130, 110, 160, 0.15) !important;
-        border-color: #e8deff !important;
+    div[data-testid="column"] .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(110, 90, 140, 0.12) !important;
     }
 
     /* Bottom Quote Card */
     .quote-card {
-        background: rgba(255, 255, 255, 0.92);
-        border: 1.5px solid #4a4253;
+        background: #ffffff;
+        border: 2px solid #4a4253;
         border-radius: 2px;
-        padding: 2.2rem 1.5rem;
+        padding: 2.5rem 1.5rem;
         text-align: center;
-        margin-top: 1.8rem;
-        box-shadow: 0 4px 15px rgba(160, 140, 190, 0.05);
+        margin-top: 1.5rem;
     }
 
     .quote-card p {
-        font-family: 'Space Grotesk', sans-serif;
-        color: #635770;
-        font-size: 1.25rem;
+        font-family: 'Lora', serif;
+        color: #5c5366;
+        font-size: 1.35rem;
         margin: 0;
         line-height: 1.5;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.2px;
     }
 
-    /* Inner Cards & Form Aesthetics */
+    /* Inner Cards */
     .vanity-card {
-        background: rgba(255, 255, 255, 0.92);
-        border-radius: 8px;
+        background: #ffffff;
+        border-radius: 6px;
         padding: 1.5rem;
         margin-bottom: 1.2rem;
-        box-shadow: 0 4px 12px rgba(140, 120, 170, 0.06);
+        box-shadow: 0 4px 12px rgba(130, 110, 160, 0.05);
     }
 
     .metric-box {
-        background: rgba(255, 255, 255, 0.85);
+        background: #f7f3fd;
         border: 1px solid #dcd0f0;
         padding: 1rem;
         border-radius: 6px;
         text-align: center;
     }
     .metric-box .metric-value {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
         font-weight: 600;
         color: #4a3468;
         font-family: 'Playfair Display', serif;
     }
     .metric-box .metric-label {
-        font-size: 0.72rem;
+        font-size: 0.75rem;
         color: #8c7aa9;
         text-transform: uppercase;
         letter-spacing: 1px;
         margin-top: 4px;
     }
 
+    /* Inputs Fix */
     div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {
-        background-color: rgba(255, 255, 255, 0.95) !important;
-        border-color: #d2c4e8 !important;
+        background-color: #ffffff !important;
+        border-color: #cbbad9 !important;
         color: #382a4b !important;
     }
 </style>
@@ -203,18 +204,18 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# PAGE 1: HOME (Dashboard Grid)
+# PAGE 1: HOME (Symmetrical 2x2 Grid)
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
 
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns(2, gap="small")
 
     with col1:
         if st.button("Your\nCollection\n\n🦇", key="btn_coll"):
             st.session_state.current_page = "Collection"
             st.rerun()
 
-        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
 
         if st.button("No - Buy\n& Rewards\n\n🌸", key="btn_nobuy"):
             st.session_state.current_page = "No-Buy Rules"
@@ -225,29 +226,24 @@ if st.session_state.current_page == "Home":
             st.session_state.current_page = "Project Pan"
             st.rerun()
 
-        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
 
         if st.button("Beauty\nstats\n\n🐈‍⬛", key="btn_stats"):
             st.session_state.current_page = "Analytics"
             st.rerun()
 
-    # Bottom Quote
+    # Bottom Quote Frame
     st.markdown("""
     <div class="quote-card">
         <p>Use what you love.<br>Finish what you start.</p>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("+ Add New Product"):
-        st.session_state.current_page = "Add Product"
-        st.rerun()
-
 # ---------------------------------------------------------
-# INNER PAGES (With Back Button)
+# INNER PAGES
 # ---------------------------------------------------------
 else:
-    if st.button("← Back to Sanctuary Menu"):
+    if st.button("← Back to Menu"):
         st.session_state.current_page = "Home"
         st.rerun()
 
@@ -256,6 +252,13 @@ else:
     # --- COLLECTION ---
     if st.session_state.current_page == "Collection":
         st.markdown("### Your Collection")
+        
+        if st.button("+ Add New Product to Collection"):
+            st.session_state.current_page = "Add Product"
+            st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
         products = st.session_state.db.get("products", [])
 
         if not products:
