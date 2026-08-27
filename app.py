@@ -8,7 +8,7 @@ from PIL import Image
 import io
 
 # ---------------------------------------------------------
-# Page Configuration & Pure CSS Styling
+# Konfiguracja Strony i Czysty CSS
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="Vanity Sanctuary",
@@ -27,7 +27,7 @@ st.markdown("""
         font-family: 'Lora', serif;
     }
 
-    /* Szerokość centralnego kontenera */
+    /* Szerokość kontenera na środku ekranu */
     .main .block-container {
         max-width: 440px !important;
         padding-top: 1.5rem !important;
@@ -36,7 +36,7 @@ st.markdown("""
         padding-right: 1rem !important;
     }
 
-    /* Górny Nagłówek */
+    /* Nagłówek górny */
     .sanctuary-header {
         background: #ffffff;
         border-radius: 4px;
@@ -62,56 +62,58 @@ st.markdown("""
         margin-bottom: 0;
     }
 
-    /* Odstępy w siatce */
+    /* Odstępy w siatce kafelków */
     div[data-testid="stHorizontalBlock"] {
         gap: 14px !important;
         margin-bottom: 14px !important;
     }
 
-    /* WYMUSZENIE WIELKICH DUŻYCH KWADRATÓW DLA ZWYKŁYCH BUTTONÓW */
-    div[data-testid="column"] button {
+    /* PRECYZYJNE WYMUSZENIE DUŻYCH KWADRATOWYCH PRZYCISKÓW */
+    div[data-testid="stElementToolbar"] { display: none; }
+    
+    .stButton > button {
         background-color: #ffffff !important;
         border: 1px solid #e2d8ee !important;
         border-radius: 4px !important;
         width: 100% !important;
-        height: 180px !important; /* Sztywna wysokość tworzy z nich duże kwadraty */
-        min-height: 180px !important;
+        height: 175px !important; /* Sztywna duża wysokość */
+        min-height: 175px !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: center !important;
         align-items: center !important;
         box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06) !important;
         transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-        padding: 15px 5px !important;
-        margin: 0 !important;
+        padding: 10px !important;
     }
 
-    div[data-testid="column"] button:hover {
+    .stButton > button:hover {
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 16px rgba(100, 80, 130, 0.12) !important;
+        border-color: #cbbba6 !important;
         background-color: #ffffff !important;
     }
 
-    /* Tekst nagłówka wewnątrz kafelka */
-    .tile-text {
+    /* Wnętrze przycisku: Napisy i emotki */
+    .stButton > button div {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .stButton > button p {
         font-family: 'Playfair Display', serif !important;
         font-size: 1.35rem !important;
         font-weight: 700 !important;
         line-height: 1.25 !important;
         color: #554a60 !important;
         text-align: center !important;
-        margin-bottom: 0.8rem !important;
-        display: block !important;
+        white-space: pre-wrap !important;
+        margin: 0 !important;
     }
 
-    /* DUŻA EMOTKA W ŚRODKU KAFELKA */
-    .tile-emoji {
-        font-size: 3.5rem !important;
-        line-height: 1 !important;
-        display: block !important;
-    }
-
-    /* Dolna karta z cytatem */
+    /* Karta z cytatem na dole */
     .quote-card {
         background: #ffffff;
         border: 2px solid #3a3342 !important;
@@ -129,7 +131,6 @@ st.markdown("""
         line-height: 1.4;
     }
 
-    /* Inner Pages */
     .vanity-card {
         background: #ffffff;
         border-radius: 4px;
@@ -141,7 +142,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# Data Storage & State Initialization
+# Baza Danych i Stan Strony
 # ---------------------------------------------------------
 DATA_FILE = "vanity_data.json"
 
@@ -184,7 +185,7 @@ def calculate_cost_per_use(price, total_uses):
     return price if total_uses <= 0 else price / total_uses
 
 # ---------------------------------------------------------
-# Header Block
+# Nagłówek
 # ---------------------------------------------------------
 st.markdown("""
 <div class="sanctuary-header">
@@ -194,35 +195,35 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# HOME PAGE (DUŻE, CZYSTE KWADRATOWE KAFELKI)
+# STRONA GŁÓWNA
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
 
-    # Row 1
+    # Rząd 1
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Your\nCollection\n\n🦇", key="btn_coll"):
+        if st.button("Your\nCollection\n\n\n🦇", key="btn_coll"):
             st.session_state.current_page = "Collection"
             st.rerun()
 
     with col2:
-        if st.button("Project\nPan\n\n🌕", key="btn_pan"):
+        if st.button("Project\nPan\n\n\n🌕", key="btn_pan"):
             st.session_state.current_page = "Project Pan"
             st.rerun()
 
-    # Row 2
+    # Rząd 2
     col3, col4 = st.columns(2)
     with col3:
-        if st.button("No - Buy\n& Rewards\n\n🌸", key="btn_nobuy"):
+        if st.button("No - Buy\n& Rewards\n\n\n🌸", key="btn_nobuy"):
             st.session_state.current_page = "No-Buy Rules"
             st.rerun()
 
     with col4:
-        if st.button("Beauty\nstats\n\n🐈‍⬛", key="btn_stats"):
+        if st.button("Beauty\nstats\n\n\n🐈‍⬛", key="btn_stats"):
             st.session_state.current_page = "Analytics"
             st.rerun()
 
-    # Quote Box
+    # Ramka z cytatem
     st.markdown("""
     <div class="quote-card">
         <p>Use what you love.<br>Finish what you start.</p>
@@ -230,7 +231,7 @@ if st.session_state.current_page == "Home":
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# INNER PAGES
+# STRONY WEWNĘTRZNE
 # ---------------------------------------------------------
 else:
     if st.button("← Back to Menu"):
