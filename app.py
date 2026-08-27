@@ -28,28 +28,28 @@ st.markdown("""
         font-family: 'Lora', serif;
     }
 
-    /* Mobile-First Strict Container Constrain */
+    /* Container Constrain */
     .block-container {
-        max-width: 100% !important;
-        padding-top: 1rem !important;
-        padding-bottom: 3rem !important;
-        padding-left: 0.8rem !important;
-        padding-right: 0.8rem !important;
+        max-width: 480px !important;
+        padding-top: 1.5rem !important;
+        padding-bottom: 2rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
     }
 
     /* Header Styling */
     .sanctuary-header {
         background: #ffffff;
         border-radius: 6px;
-        padding: 1.5rem 1rem 1.2rem 1rem;
+        padding: 1.8rem 1rem 1.4rem 1rem;
         text-align: center;
-        margin-bottom: 12px;
+        margin-bottom: 16px;
         box-shadow: 0 4px 15px rgba(120, 100, 150, 0.04);
     }
 
     .sanctuary-header h1 {
         font-family: 'Playfair Display', serif !important;
-        font-size: 1.9rem !important;
+        font-size: 2.2rem !important;
         color: #3a3342 !important;
         margin: 0 !important;
         font-weight: 700 !important;
@@ -58,36 +58,38 @@ st.markdown("""
 
     .sanctuary-header p {
         color: #b5a4c9;
-        font-size: 1.05rem;
+        font-size: 1.15rem;
         font-family: 'Playfair Display', serif;
         font-style: italic;
-        margin-top: 0.2rem;
+        margin-top: 0.3rem;
         margin-bottom: 0;
         font-weight: 400;
     }
 
-    /* Coherent Grid Tile Buttons - Mobile Optimized */
+    /* Coherent Grid Tile Buttons */
     div[data-testid="column"] .stButton > button {
         background: #ffffff !important;
         border: 1px solid #e2d8ee !important;
         border-radius: 6px !important;
         color: #554a60 !important;
         font-family: 'Playfair Display', serif !important;
-        font-size: 1.1rem !important;
+        font-size: 1.25rem !important;
         font-weight: 700 !important;
-        height: 130px !important;
+        height: 160px !important;
         width: 100% !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
         box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06) !important;
-        padding: 0.3rem !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+        padding: 0.5rem !important;
         margin: 0 !important;
-        white-space: pre-wrap !important;
     }
 
     div[data-testid="column"] .stButton > button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 18px rgba(100, 80, 130, 0.12) !important;
         border-color: #cbbad9 !important;
         background-color: #ffffff !important;
         color: #3a3342 !important;
@@ -95,25 +97,29 @@ st.markdown("""
 
     div[data-testid="column"] .stButton > button p {
         font-family: 'Playfair Display', serif !important;
-        font-size: 1.1rem !important;
+        font-size: 1.25rem !important;
         font-weight: 700 !important;
-        line-height: 1.2 !important;
+        line-height: 1.25 !important;
         margin: 0 !important;
+        white-space: pre-wrap !important;
         text-align: center !important;
     }
 
-    /* Fix columns wrapping on mobile */
+    /* Force 2-column layout side-by-side everywhere (Mobile & Desktop) */
     div[data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
+        flex-wrap: nowrap !important;
         gap: 8px !important;
-        margin-bottom: 8px !important;
+        margin-bottom: 12px !important;
     }
 
     div[data-testid="column"] {
         flex: 1 !important;
-        min-width: 0 !important;
-        padding: 0 !important;
+        width: 50% !important;
+        min-width: 50% !important;
+        max-width: 50% !important;
+        padding: 0 4px !important;
     }
 
     /* Bottom Quote Card */
@@ -121,7 +127,7 @@ st.markdown("""
         background: #ffffff;
         border: 1px solid #e2d8ee;
         border-radius: 6px;
-        padding: 1.5rem 1rem;
+        padding: 2.2rem 1rem;
         text-align: center;
         margin-top: 12px;
         box-shadow: 0 4px 12px rgba(100, 80, 130, 0.04);
@@ -130,9 +136,10 @@ st.markdown("""
     .quote-card p {
         font-family: 'Lora', serif;
         color: #5c5366;
-        font-size: 1.1rem;
+        font-size: 1.25rem;
         margin: 0;
-        line-height: 1.4;
+        line-height: 1.45;
+        letter-spacing: 0.2px;
     }
 
     /* Inner Cards - Coherent Radius & Style */
@@ -140,29 +147,29 @@ st.markdown("""
         background: #ffffff;
         border-radius: 6px;
         border: 1px solid #e9e2f4;
-        padding: 1rem;
-        margin-bottom: 0.8rem;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
         box-shadow: 0 3px 10px rgba(130, 110, 160, 0.04);
     }
 
     .metric-box {
         background: #f7f3fd;
         border: 1px solid #dcd0f0;
-        padding: 0.6rem;
+        padding: 0.8rem;
         border-radius: 6px;
         text-align: center;
     }
     .metric-box .metric-value {
-        font-size: 1.1rem;
+        font-size: 1.3rem;
         font-weight: 600;
         color: #4a3468;
         font-family: 'Playfair Display', serif;
     }
     .metric-box .metric-label {
-        font-size: 0.6rem;
+        font-size: 0.65rem;
         color: #8c7aa9;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
         margin-top: 2px;
     }
 
