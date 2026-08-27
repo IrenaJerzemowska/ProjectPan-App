@@ -66,53 +66,6 @@ st.markdown("""
         font-weight: 400;
     }
 
-    /* --- GHOST-PROOF MOBILE GRID (Pure CSS Layout) --- */
-    .grid-container {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        width: 100%;
-        margin-bottom: 12px;
-    }
-
-    .grid-row {
-        display: flex;
-        flex-direction: row;
-        gap: 8px;
-        width: 100%;
-    }
-
-    .grid-tile {
-        background: #ffffff !important;
-        border: 1px solid #e2d8ee !important;
-        border-radius: 6px !important;
-        color: #554a60 !important;
-        font-family: 'Playfair Display', serif !important;
-        font-size: 1.25rem !important;
-        font-weight: 700 !important;
-        height: 150px !important;
-        width: 50% !important;
-        flex: 1;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06) !important;
-        text-decoration: none !important;
-        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-        padding: 0.5rem !important;
-        text-align: center;
-        cursor: pointer;
-    }
-
-    .grid-tile:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 18px rgba(100, 80, 130, 0.12) !important;
-        border-color: #cbbad9 !important;
-        background-color: #ffffff !important;
-        color: #3a3342 !important;
-    }
-
     /* Bottom Quote Card */
     .quote-card {
         background: #ffffff;
@@ -243,11 +196,14 @@ def estimate_pan_completion(category, capacity, unit, daily_uses):
 
 def image_to_base64(uploaded_file):
     if uploaded_file is not None:
-        image = Image.open(uploaded_file)
-        image.thumbnail((400, 400))
-        buffered = io.BytesIO()
-        image.save(buffered, format="PNG")
-        return base64.b64encode(buffered.getvalue()).decode()
+        try:
+            image = Image.open(uploaded_file)
+            image.thumbnail((400, 400))
+            buffered = io.BytesIO()
+            image.convert("RGB").save(buffered, format="JPEG", quality=85)
+            return base64.b64encode(buffered.getvalue()).decode()
+        except Exception:
+            return None
     return None
 
 # ---------------------------------------------------------
@@ -261,7 +217,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# PAGE 1: HOME (Pure HTML Symmetrical Square Grid)
+# PAGE 1: HOME
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
     
@@ -331,8 +287,8 @@ else:
 
                 st.markdown(f"""
                 <div class="vanity-card">
-                    <h4 style="margin:0 0 0.4rem 0; font-family:'Playfair Display', serif;">{p['brand']} — <span style="font-weight:400;">{p['name']}</span></h4>
-                    <p style="margin:0 0 0.6rem 0; color:#8c7aa9; font-size:0.88rem;">Category: {p['category']} | Shade: {p['shade']}</p>
+                    <h4 style="margin:0 0 0.4rem 0; font-family:'Playfair Display', serif;">{p['brand']} — <span style="font-weight:400;">{p['shade']}</span></h4>
+                    <p style="margin:0 0 0.6rem 0; color:#8c7aa9; font-size:0.88rem;">Category: {p['category']}</p>
                     <p style="margin:0; font-size:0.9rem;"><strong>Price:</strong> {p['price']:.2f} {p['currency']} | <strong>Age:</strong> {days} days | <strong>Uses:</strong> {p.get('total_uses', 0)} | <strong>CPU:</strong> {cpu:.2f} {p['currency']}</p>
                 """, unsafe_allow_html=True)
 
@@ -373,10 +329,9 @@ else:
 
                 if st.session_state[edit_mode_key]:
                     with st.form(key=f"edit_form_{p['id']}"):
-                        st.markdown(f"**Edit details for {p['brand']} - {p['name']}**")
-                        new_name = st.text_input("Product Name", value=p["name"])
+                        st.markdown(f"**Edit details for {p['brand']} - {p['shade']}**")
                         new_brand = st.text_input("Brand", value=p["brand"])
-                        new_shade = st.text_input("Shade", value=p["shade"] if p["shade"] != "N/A" else "")
+                        new_shade = st.text_input("Shade / Variant", value=p["shade"] if p["shade"] != "N/A" else "")
                         
                         try:
                             cat_index = CATEGORIES.index(p["category"].lower())
@@ -408,7 +363,6 @@ else:
                             new_uses = st.number_input("Total Uses", min_value=0, value=int(p.get("total_uses", 0)))
 
                         if st.form_submit_button("Save Changes ✓"):
-                            p["name"] = new_name
                             p["brand"] = new_brand
                             p["shade"] = new_shade if new_shade else "N/A"
                             p["category"] = new_category
@@ -441,7 +395,7 @@ else:
 
                 st.markdown(f"""
                 <div class="vanity-card">
-                    <h4 style="margin:0 0 1rem 0; font-family:'Playfair Display', serif;">{p['brand']} — {p['name']} ({p['shade']})</h4>
+                    <h4 style="margin:0 0 1rem 0; font-family:'Playfair Display', serif;">{p['brand']} — {p['shade']}</h4>
                 """, unsafe_allow_html=True)
 
                 m1, m2, m3 = st.columns(3)
@@ -510,7 +464,7 @@ else:
                 days = calculate_days_owned(p["purchase_date"])
                 st.markdown(f"""
                 <div class="vanity-card">
-                    <h5 style="margin:0; font-family:'Playfair Display', serif;">{p['brand']} — {p['name']}</h5>
+                    <h5 style="margin:0; font-family:'Playfair Display', serif;">{p['brand']} — {p['shade']}</h5>
                     <p style="margin:4px 0 0 0; color:#635770; font-size:0.85rem;">Owned for {days} days</p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -519,9 +473,8 @@ else:
     elif st.session_state.current_page == "Add Product":
         st.markdown("### Add Product")
         with st.form("add_form", clear_on_submit=True):
-            name = st.text_input("Product Name *")
             brand = st.text_input("Brand *")
-            shade = st.text_input("Shade")
+            shade = st.text_input("Shade / Variant (e.g. 280 Mauve Quartz)")
             category = st.selectbox("Category *", CATEGORIES)
             
             c1, c2 = st.columns(2)
@@ -530,26 +483,26 @@ else:
                 currency = st.selectbox("Currency *", ["GBP", "PLN", "EUR", "USD"])
                 purchase_date = st.date_input("Purchase Date *", datetime.date.today())
             with c2:
-                capacity = st.number_input("Capacity", min_value=0.0, value=10.0)
-                unit = st.selectbox("Unit", ["ml", "g", "items"])
+                capacity = st.number_input("Capacity", min_value=0.0, value=4.0)
+                unit = st.selectbox("Unit", ["g", "ml", "items"])
 
             in_pan = st.checkbox("Add to Project Pan immediately", value=True)
             uploaded_img = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
 
             if st.form_submit_button("Save to Collection ✨"):
-                if name and brand:
+                if brand:
                     img_b64 = image_to_base64(uploaded_img) if uploaded_img else None
                     new_item = {
                         "id": str(datetime.datetime.now().timestamp()),
-                        "name": name, "brand": brand, "shade": shade if shade else "N/A",
+                        "brand": brand, "shade": shade if shade else "N/A",
                         "category": category, "price": float(price), "currency": currency,
                         "purchase_date": str(purchase_date), "capacity": float(capacity),
                         "unit": unit, "total_uses": 0, "in_project_pan": in_pan, "image_b64": img_b64
                     }
                     st.session_state.db["products"].append(new_item)
                     save_data(st.session_state.db)
-                    st.success(f"Added {brand} - {name}")
+                    st.success(f"Added {brand} - {shade}")
                     st.session_state.current_page = "Collection"
                     st.rerun()
                 else:
-                    st.error("Please fill in Name and Brand.")
+                    st.error("Please fill in Brand.")
