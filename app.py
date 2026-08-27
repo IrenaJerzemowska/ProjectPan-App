@@ -309,7 +309,7 @@ else:
                         if st.button("+ Log Use", key=f"quick_use_{p['id']}"):
                             p["total_uses"] = p.get("total_uses", 0) + 1
                             if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
-                            st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + 5
+                            st.session_state.db["stats"]["xp"] = max(st.session_state.db["stats"].get("xp", 0) + 5, 0)
                             save_data(st.session_state.db)
                             st.rerun()
 
@@ -360,7 +360,7 @@ else:
                             
                             if "empties" not in st.session_state.db: st.session_state.db["empties"] = []
                             st.session_state.db["empties"].append(empty_item)
-                            st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + 50
+                            st.session_state.db["stats"]["xp"] = max(st.session_state.db["stats"].get("xp", 0) + 50, 0)
                             st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
                             st.session_state[finishing_id_key] = None
                             save_data(st.session_state.db)
@@ -376,12 +376,26 @@ else:
                         new_category = st.selectbox("Category", CATEGORIES, index=CATEGORIES.index(p["category"].lower()) if p["category"].lower() in CATEGORIES else 0)
                         new_price = st.number_input("Price", min_value=0.0, value=float(p["price"]))
                         new_currency = st.selectbox("Currency", ["GBP", "PLN", "EUR", "USD"], index=["GBP", "PLN", "EUR", "USD"].index(p["currency"]) if p["currency"] in ["GBP", "PLN", "EUR", "USD"] else 0)
+                        
+                        # Added and removed uses automation inside Edit form!
+                        old_uses = p.get("total_uses", 0)
+                        new_uses_input = st.number_input("Total Uses", min_value=0, value=int(old_uses))
+
                         if st.form_submit_button("Save Changes ✓"):
+                            uses_diff = int(new_uses_input) - int(old_uses)
                             p["brand"] = new_brand
                             p["shade"] = new_shade if new_shade else "N/A"
                             p["category"] = new_category
                             p["price"] = float(new_price)
                             p["currency"] = new_currency
+                            p["total_uses"] = int(new_uses_input)
+                            
+                            # Automatically update XP based on added or removed uses (+5 XP per added use, -5 XP per removed use)
+                            if uses_diff != 0:
+                                if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
+                                current_xp = st.session_state.db["stats"].get("xp", 0)
+                                st.session_state.db["stats"]["xp"] = max(current_xp + (uses_diff * 5), 0)
+
                             save_data(st.session_state.db)
                             st.session_state[edit_mode_key] = False
                             st.rerun()
@@ -419,6 +433,13 @@ else:
                         "in_project_pan": False
                     }
                     st.session_state.db["products"].append(new_item)
+                    
+                    # Automatically grant XP for initial uses if set on creation
+                    if int(initial_uses) > 0:
+                        if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
+                        current_xp = st.session_state.db["stats"].get("xp", 0)
+                        st.session_state.db["stats"]["xp"] = max(current_xp + (int(initial_uses) * 5), 0)
+
                     save_data(st.session_state.db)
                     st.success("Product added!")
                     st.session_state.current_page = "Collection"
@@ -454,7 +475,7 @@ else:
         st.markdown(f"""
         <div class="vanity-card" style="background-color: #f7f3fd; text-align: center;">
             <h4 style="margin:0; font-family:'Playfair Display', serif; color:#4a3468;">Rank: {current_level_title}</h4>
-            <p style="margin:5px 0 0 0; font-size: 0.9rem; color:#8c7aa9;">Total XP: <b>{current_xp} XP</b> (+5 XP per logged use!)</p>
+            <p style="margin:5px 0 0 0; font-size: 0.9rem; color:#8c7aa9;">Total XP: <b>{current_xp} XP</b> (+5 XP per added use, -5 XP per removed use!)</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -494,16 +515,23 @@ else:
                 st.markdown("<br>", unsafe_allow_html=True)
                 col_add, col_btn = st.columns([2, 1])
                 with col_add:
-                    add_uses = st.number_input("Add uses:", min_value=1, max_value=10, value=1, key=f"uses_{p['id']}")
+                    # Allow negative numbers or adjustments to handle both added and removed uses automatically
+                    use_adjustment = st.number_input("Adjust uses (+ add, - remove):", min_value=-50, max_value=50, value=1, key=f"uses_{p['id']}")
                 with col_btn:
                     st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("Log Uses (+XP)", key=f"btn_{p['id']}"):
-                        p["total_uses"] = p.get("total_uses", 0) + add_uses
-                        if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
-                        st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + (add_uses * 5)
-                        save_data(st.session_state.db)
-                        st.success(f"Logged {add_uses} use(s) and added +{add_uses * 5} XP!")
-                        st.rerun()
+                    if st.button("Update Uses & XP", key=f"btn_{p['id']}"):
+                        if use_adjustment != 0:
+                            p["total_uses"] = max(p.get("total_uses", 0) + use_adjustment, 0)
+                            if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
+                            current_xp = st.session_state.db["stats"].get("xp", 0)
+                            # Automatically add XP if uses increased, or remove XP if uses decreased
+                            st.session_state.db["stats"]["xp"] = max(current_xp + (use_adjustment * 5), 0)
+                            save_data(st.session_state.db)
+                            if use_adjustment > 0:
+                                st.success(f"Added {use_adjustment} use(s) and gained +{use_adjustment * 5} XP!")
+                            else:
+                                st.warning(f"Removed {abs(use_adjustment)} use(s) and deducted {abs(use_adjustment) * 5} XP.")
+                            st.rerun()
 
                 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -577,7 +605,6 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-        # Calendar Date Picker to customize the start date
         with st.form("no_buy_date_form"):
             new_start_date = st.date_input("Set or adjust No-Buy start date:", value=parsed_start_date)
             if st.form_submit_button("Update Start Date ✓"):
@@ -588,7 +615,6 @@ else:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # "Oops I bought something" slip-up button (Resets streak + deducts 50 XP)
         if st.button("🚨 Oops, I bought something (Reset Streak & -50 XP)"):
             st.session_state.db["stats"]["no_buy_start_date"] = str(datetime.date.today())
             current_xp_val = st.session_state.db["stats"].get("xp", 0)
