@@ -105,13 +105,13 @@ st.markdown("""
         text-align: center !important;
     }
 
-    /* Force 2-column layout side-by-side everywhere (Mobile & Desktop) */
+    /* Compact 2-column layout with tight spacing */
     div[data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        gap: 8px !important;
-        margin-bottom: 12px !important;
+        gap: 4px !important;
+        margin-bottom: 4px !important;
     }
 
     div[data-testid="column"] {
@@ -119,7 +119,7 @@ st.markdown("""
         width: 50% !important;
         min-width: 50% !important;
         max-width: 50% !important;
-        padding: 0 4px !important;
+        padding: 0 2px !important;
     }
 
     /* Bottom Quote Card */
