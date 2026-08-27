@@ -255,9 +255,10 @@ if st.session_state.current_page == "Home":
             st.session_state.current_page = "Project Pan"
             st.rerun()
 
+    # Fixed matching size buttons for Wishlist and No-Buy & Rewards
     col3, col4 = st.columns(2)
     with col3:
-        if st.button("Wishlist\n✨", key="btn_wishlist", use_container_width=True):
+        if st.button("Wishlist\n\n✨", key="btn_wishlist", use_container_width=True):
             st.session_state.current_page = "Wishlist"
             st.rerun()
     with col4:
@@ -302,6 +303,7 @@ else:
         st.markdown("<br>", unsafe_allow_html=True)
 
         products = st.session_state.db.get("products", [])
+        finishing_id_key = "finishing_product_id"
 
         if not products:
             st.markdown("""
@@ -356,28 +358,56 @@ else:
                         st.rerun()
                 with c3:
                     if st.button("Mark as Finished 🎉", key=f"fin_{p['id']}"):
-                        is_lip = p["category"].lower() in LIP_CATEGORIES
-                        if is_lip:
-                            st.session_state.db["stats"]["finished_lip_products"] = st.session_state.db["stats"].get("finished_lip_products", 0) + 1
-                        
-                        # Archive to empties graveyard
-                        empty_item = p.copy()
-                        empty_item["finished_date"] = str(datetime.date.today())
-                        empty_item["final_days_owned"] = calculate_days_owned(p["purchase_date"])
-                        empty_item["final_cpu"] = calculate_cost_per_use(p["price"], p.get("total_uses", 0))
-                        
-                        if "empties" not in st.session_state.db:
-                            st.session_state.db["empties"] = []
-                        st.session_state.db["empties"].append(empty_item)
-                        
-                        st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + 50
-                        st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
-                        save_data(st.session_state.db)
-                        
-                        # Trigger reward suggestion check for lips
-                        if is_lip and st.session_state.db["stats"]["finished_lip_products"] % 5 == 0:
-                            st.session_state["show_lip_reward_banner"] = True
+                        st.session_state[finishing_id_key] = p["id"]
                         st.rerun()
+
+                # Review & Rating Modal / Section when marking as finished
+                if st.session_state.get(finishing_id_key) == p["id"]:
+                    st.markdown(f"""
+                    <div style="background-color: #f4ecfb; border: 1px solid #d4c2ec; border-radius: 6px; padding: 1.2rem; margin-top: 10px; margin-bottom: 10px;">
+                        <h4 style="margin:0 0 0.3rem 0; font-family:'Playfair Display', serif; color:#4a3468;">🌟 Review & Grade Finished Product</h4>
+                        <p style="margin:0; font-size:0.9rem; color:#5c5366;">How was your experience with <b>{p['brand']} - {p['shade']}</b>?</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    with st.form(key=f"review_form_{p['id']}"):
+                        finish_rating = st.slider("Rating (Stars)", min_value=0, max_value=5, value=5, step=1, help="0 stars is the worst, 5 stars is the best!")
+                        finish_review = st.text_area("Write a short review or thoughts:")
+                        
+                        rc1, rc2 = st.columns(2)
+                        with rc1:
+                            submit_review = st.form_submit_button("Complete & Archive 🪦")
+                        with rc2:
+                            cancel_review = st.form_submit_button("Cancel")
+                            
+                        if submit_review:
+                            is_lip = p["category"].lower() in LIP_CATEGORIES
+                            if is_lip:
+                                st.session_state.db["stats"]["finished_lip_products"] = st.session_state.db["stats"].get("finished_lip_products", 0) + 1
+                            
+                            empty_item = p.copy()
+                            empty_item["finished_date"] = str(datetime.date.today())
+                            empty_item["final_days_owned"] = calculate_days_owned(p["purchase_date"])
+                            empty_item["final_cpu"] = calculate_cost_per_use(p["price"], p.get("total_uses", 0))
+                            empty_item["rating"] = finish_rating
+                            empty_item["review"] = finish_review
+                            
+                            if "empties" not in st.session_state.db:
+                                st.session_state.db["empties"] = []
+                            st.session_state.db["empties"].append(empty_item)
+                            
+                            st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + 50
+                            st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
+                            st.session_state[finishing_id_key] = None
+                            save_data(st.session_state.db)
+                            
+                            if is_lip and st.session_state.db["stats"]["finished_lip_products"] % 5 == 0:
+                                st.session_state["show_lip_reward_banner"] = True
+                            st.rerun()
+                            
+                        if cancel_review:
+                            st.session_state[finishing_id_key] = None
+                            st.rerun()
 
                 if st.session_state[edit_mode_key]:
                     with st.form(key=f"edit_form_{p['id']}"):
@@ -442,11 +472,17 @@ else:
             st.info("No empty products archived yet. Finish items from your collection to see them here!")
         else:
             for e in reversed(empties):
+                rating_stars = "⭐" * e.get("rating", 0) if "rating" in e else "No rating"
+                review_text = e.get("review", "")
+                review_display = f"<p style='margin:6px 0 0 0; font-size:0.86rem; color:#5c5366; font-style:italic;'>\"{review_text}\"</p>" if review_text else ""
+                
                 st.markdown(f"""
                 <div class="vanity-card">
                     <h4 style="margin:0 0 0.3rem 0; font-family:'Playfair Display', serif;">{e['brand']} — {e['shade']}</h4>
-                    <p style="margin:0 0 0.5rem 0; color:#8c7aa9; font-size:0.85rem;">Category: {e['category']} | Finished on {e.get('finished_date', 'Unknown')}</p>
+                    <p style="margin:0 0 0.4rem 0; color:#8c7aa9; font-size:0.85rem;">Category: {e['category']} | Finished on {e.get('finished_date', 'Unknown')}</p>
+                    <p style="margin:0 0 0.3rem 0; font-size:0.88rem;"><strong>Rating:</strong> {rating_stars} ({e.get('rating', 0)}/5)</p>
                     <p style="margin:0; font-size:0.88rem;"><strong>Lifespan:</strong> {e.get('final_days_owned', 0)} days | <strong>Total Uses:</strong> {e.get('total_uses', 0)} | <strong>Final CPU:</strong> {e.get('final_cpu', 0):.2f} {e['currency']}</p>
+                    {review_display}
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -518,7 +554,6 @@ else:
     elif st.session_state.current_page == "Wishlist":
         st.markdown("### Wishlist ✨")
         
-        # Check if reward banner should show up from finishing lips
         if st.session_state.get("show_lip_reward_banner", False):
             wishlist_pool = st.session_state.db.get("wishlist", [])
             if wishlist_pool:
@@ -555,7 +590,6 @@ else:
                 
             if st.form_submit_button("Add to Wishlist 💭"):
                 if w_brand and w_item:
-                    # Dupe check against collection
                     existing_products = st.session_state.db.get("products", [])
                     dupe_matches = [p for p in existing_products if p["brand"].lower() == w_brand.lower() and p["category"].lower() == w_cat.lower()]
                     
@@ -761,3 +795,4 @@ else:
                     st.rerun()
                 else:
                     st.error("Please fill in Brand.")
+  
