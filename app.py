@@ -6,6 +6,7 @@ import json
 import base64
 from PIL import Image
 import io
+import random
 
 # ---------------------------------------------------------
 # Page Configuration & Clean Aesthetic Theme
@@ -146,6 +147,12 @@ def load_data():
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
+                if "products" not in data:
+                    data["products"] = []
+                if "wishlist" not in data:
+                    data["wishlist"] = []
+                if "empties" not in data:
+                    data["empties"] = []
                 if "stats" not in data:
                     data["stats"] = {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0}
                 if "no_buy_start_date" not in data["stats"]:
@@ -154,8 +161,8 @@ def load_data():
                     data["stats"]["xp"] = 0
                 return data
         except Exception:
-            return {"products": [], "settings": {}, "stats": {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0}}
-    return {"products": [], "settings": {}, "stats": {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0}}
+            return {"products": [], "wishlist": [], "empties": [], "settings": {}, "stats": {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0}}
+    return {"products": [], "wishlist": [], "empties": [], "settings": {}, "stats": {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0}}
 
 def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
@@ -250,13 +257,17 @@ if st.session_state.current_page == "Home":
 
     col3, col4 = st.columns(2)
     with col3:
+        if st.button("Wishlist\n✨", key="btn_wishlist", use_container_width=True):
+            st.session_state.current_page = "Wishlist"
+            st.rerun()
+    with col4:
         if st.button("No - Buy\n& Rewards\n\n🌸", key="btn_nobuy", use_container_width=True):
             st.session_state.current_page = "No-Buy Rules"
             st.rerun()
-    with col4:
-        if st.button("Beauty\nstats\n\n🐈‍⬛", key="btn_stats", use_container_width=True):
-            st.session_state.current_page = "Analytics"
-            st.rerun()
+
+    if st.button("Beauty Stats 🐈‍⬛", key="btn_stats", use_container_width=True):
+        st.session_state.current_page = "Analytics"
+        st.rerun()
 
     st.markdown("""
     <div class="quote-card">
@@ -278,9 +289,15 @@ else:
     if st.session_state.current_page == "Collection":
         st.markdown("### Your Collection")
         
-        if st.button("+ Add New Product to Collection"):
-            st.session_state.current_page = "Add Product"
-            st.rerun()
+        col_c_btn1, col_c_btn2 = st.columns(2)
+        with col_c_btn1:
+            if st.button("+ Add New Product"):
+                st.session_state.current_page = "Add Product"
+                st.rerun()
+        with col_c_btn2:
+            if st.button("Empties Graveyard 🪦"):
+                st.session_state.current_page = "Empties"
+                st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -339,11 +356,27 @@ else:
                         st.rerun()
                 with c3:
                     if st.button("Mark as Finished 🎉", key=f"fin_{p['id']}"):
-                        if p["category"].lower() in LIP_CATEGORIES:
+                        is_lip = p["category"].lower() in LIP_CATEGORIES
+                        if is_lip:
                             st.session_state.db["stats"]["finished_lip_products"] = st.session_state.db["stats"].get("finished_lip_products", 0) + 1
+                        
+                        # Archive to empties graveyard
+                        empty_item = p.copy()
+                        empty_item["finished_date"] = str(datetime.date.today())
+                        empty_item["final_days_owned"] = calculate_days_owned(p["purchase_date"])
+                        empty_item["final_cpu"] = calculate_cost_per_use(p["price"], p.get("total_uses", 0))
+                        
+                        if "empties" not in st.session_state.db:
+                            st.session_state.db["empties"] = []
+                        st.session_state.db["empties"].append(empty_item)
+                        
                         st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + 50
                         st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
                         save_data(st.session_state.db)
+                        
+                        # Trigger reward suggestion check for lips
+                        if is_lip and st.session_state.db["stats"]["finished_lip_products"] % 5 == 0:
+                            st.session_state["show_lip_reward_banner"] = True
                         st.rerun()
 
                 if st.session_state[edit_mode_key]:
@@ -398,6 +431,24 @@ else:
                             st.rerun()
 
                 st.markdown("<br>", unsafe_allow_html=True)
+
+    # --- EMPTIES GRAVEYARD ---
+    elif st.session_state.current_page == "Empties":
+        st.markdown("### Empties Graveyard 🪦")
+        st.markdown("<p style='color:#8c7aa9; font-size:0.9rem;'>Celebrating your successfully panned milestones.</p>", unsafe_allow_html=True)
+        
+        empties = st.session_state.db.get("empties", [])
+        if not empties:
+            st.info("No empty products archived yet. Finish items from your collection to see them here!")
+        else:
+            for e in reversed(empties):
+                st.markdown(f"""
+                <div class="vanity-card">
+                    <h4 style="margin:0 0 0.3rem 0; font-family:'Playfair Display', serif;">{e['brand']} — {e['shade']}</h4>
+                    <p style="margin:0 0 0.5rem 0; color:#8c7aa9; font-size:0.85rem;">Category: {e['category']} | Finished on {e.get('finished_date', 'Unknown')}</p>
+                    <p style="margin:0; font-size:0.88rem;"><strong>Lifespan:</strong> {e.get('final_days_owned', 0)} days | <strong>Total Uses:</strong> {e.get('total_uses', 0)} | <strong>Final CPU:</strong> {e.get('final_cpu', 0):.2f} {e['currency']}</p>
+                </div>
+                """, unsafe_allow_html=True)
 
     # --- PROJECT PAN ---
     elif st.session_state.current_page == "Project Pan":
@@ -463,12 +514,126 @@ else:
 
                 st.markdown("</div>", unsafe_allow_html=True)
 
+    # --- WISHLIST ---
+    elif st.session_state.current_page == "Wishlist":
+        st.markdown("### Wishlist ✨")
+        
+        # Check if reward banner should show up from finishing lips
+        if st.session_state.get("show_lip_reward_banner", False):
+            wishlist_pool = st.session_state.db.get("wishlist", [])
+            if wishlist_pool:
+                reward_pick = random.choice(wishlist_pool)
+                st.markdown(f"""
+                <div style="background-color: #f4ecfb; border: 1px solid #d4c2ec; border-radius: 6px; padding: 1.2rem; margin-bottom: 1.2rem;">
+                    <h4 style="margin:0 0 0.3rem 0; font-family:'Playfair Display', serif; color:#4a3468;">🎉 Lip Milestone Unlocked!</h4>
+                    <p style="margin:0; font-size:0.95rem; color:#5c5366;">You've finished 5 lip products! Time to reward yourself with that <b>{reward_pick['brand']} - {reward_pick['item']}</b> you've been eyeing on your wishlist.</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown("""
+                <div style="background-color: #f4ecfb; border: 1px solid #d4c2ec; border-radius: 6px; padding: 1.2rem; margin-bottom: 1.2rem;">
+                    <h4 style="margin:0 0 0.3rem 0; font-family:'Playfair Display', serif; color:#4a3468;">🎉 Lip Milestone Unlocked!</h4>
+                    <p style="margin:0; font-size:0.95rem; color:#5c5366;">You've finished 5 lip products! Add items to your wishlist to receive automated reward suggestions.</p>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            if st.button("Dismiss Reward Notice"):
+                st.session_state["show_lip_reward_banner"] = False
+                st.rerun()
+
+        with st.form("wishlist_form", clear_on_submit=True):
+            w_brand = st.text_input("Brand *")
+            w_item = st.text_input("Product Name / Shade *")
+            w_cat = st.selectbox("Category", CATEGORIES, key="w_cat")
+            
+            wc1, wc2 = st.columns(2)
+            with wc1:
+                w_price = st.number_input("Estimated Price", min_value=0.0, value=15.0)
+                w_est_uses = st.number_input("Estimated Total Uses", min_value=1, value=50)
+            with wc2:
+                w_curr = st.selectbox("Currency", ["GBP", "PLN", "EUR", "USD"], key="w_curr")
+                
+            if st.form_submit_button("Add to Wishlist 💭"):
+                if w_brand and w_item:
+                    # Dupe check against collection
+                    existing_products = st.session_state.db.get("products", [])
+                    dupe_matches = [p for p in existing_products if p["brand"].lower() == w_brand.lower() and p["category"].lower() == w_cat.lower()]
+                    
+                    wishlist_item = {
+                        "id": str(datetime.datetime.now().timestamp()),
+                        "brand": w_brand,
+                        "item": w_item,
+                        "category": w_cat,
+                        "price": float(w_price),
+                        "currency": w_curr,
+                        "estimated_uses": int(w_est_uses)
+                    }
+                    if "wishlist" not in st.session_state.db:
+                        st.session_state.db["wishlist"] = []
+                    st.session_state.db["wishlist"].append(wishlist_item)
+                    save_data(st.session_state.db)
+                    
+                    if dupe_matches:
+                        st.warning(f"Note: You already own items from **{w_brand}** in the **{w_cat}** category. Check your collection to avoid duplicate shades!")
+                    else:
+                        st.success(f"Added {w_brand} - {w_item} to wishlist!")
+                    st.rerun()
+                else:
+                    st.error("Please fill in Brand and Product Name.")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        wishlist_items = st.session_state.db.get("wishlist", [])
+
+        if not wishlist_items:
+            st.info("Your wishlist is currently empty.")
+        else:
+            for w in reversed(wishlist_items):
+                est_uses = w.get("estimated_uses", 50)
+                projected_cpu = w["price"] / est_uses if est_uses > 0 else w["price"]
+
+                st.markdown(f"""
+                <div class="vanity-card">
+                    <h4 style="margin:0 0 0.3rem 0; font-family:'Playfair Display', serif;">{w['brand']} — {w['item']}</h4>
+                    <p style="margin:0 0 0.4rem 0; color:#8c7aa9; font-size:0.88rem;">Category: {w['category']} | <b>{w['price']:.2f} {w['currency']}</b></p>
+                    <p style="margin:0; font-size:0.84rem; color:#6b5b7a;">🔮 Projected Cost-Per-Use: <b>{projected_cpu:.2f} {w['currency']}</b> (based on ~{est_uses} uses)</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                col_w1, col_w2 = st.columns(2)
+                with col_w1:
+                    if st.button("Move to Collection 🛒", key=f"move_{w['id']}"):
+                        new_product = {
+                            "id": str(datetime.datetime.now().timestamp()),
+                            "brand": w["brand"],
+                            "shade": w["item"],
+                            "category": w["category"],
+                            "price": w["price"],
+                            "currency": w["currency"],
+                            "purchase_date": str(datetime.date.today()),
+                            "capacity": 10.0,
+                            "unit": "ml",
+                            "total_uses": 0,
+                            "in_project_pan": False,
+                            "image_b64": None
+                        }
+                        st.session_state.db["products"].append(new_product)
+                        st.session_state.db["wishlist"] = [item for item in st.session_state.db["wishlist"] if item["id"] != w["id"]]
+                        st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + 10
+                        save_data(st.session_state.db)
+                        st.success("Moved item to your collection!")
+                        st.rerun()
+                with col_w2:
+                    if st.button("Delete 🗑️", key=f"del_w_{w['id']}"):
+                        st.session_state.db["wishlist"] = [item for item in st.session_state.db["wishlist"] if item["id"] != w["id"]]
+                        save_data(st.session_state.db)
+                        st.rerun()
+                st.markdown("<br>", unsafe_allow_html=True)
+
     # --- NO-BUY RULES ---
     elif st.session_state.current_page == "No-Buy Rules":
         st.markdown("### No - Buy & Rewards")
         stats = st.session_state.db.get("stats", {})
 
-        # Calculate No-Buy Days Streak
         start_date_str = stats.get("no_buy_start_date", str(datetime.date.today()))
         try:
             start_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d").date()
@@ -489,7 +654,6 @@ else:
 
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # Oops I bought something penalty button
         if st.button("🚨 Oops, I Bought Something (Reset Streak & -50 XP)"):
             st.session_state.db["stats"]["no_buy_start_date"] = str(datetime.date.today())
             current_xp = st.session_state.db["stats"].get("xp", 0)
@@ -521,7 +685,12 @@ else:
             st.info("No data available.")
         else:
             total_items = len(products)
-            total_spent = sum([p.get("price", 0.0) for p in products])
+            
+            currency_totals = {}
+            for p in products:
+                curr = p.get("currency", "GBP")
+                currency_totals[curr] = currency_totals.get(curr, 0.0) + p.get("price", 0.0)
+
             most_used = max(products, key=lambda x: x.get("total_uses", 0)) if products else None
 
             st.markdown("#### Overview Metrics")
@@ -529,7 +698,8 @@ else:
             with m_col1:
                 st.markdown(f'<div class="metric-box"><div class="metric-value">{total_items}</div><div class="metric-label">Total Items</div></div>', unsafe_allow_html=True)
             with m_col2:
-                st.markdown(f'<div class="metric-box"><div class="metric-value">{total_spent:.2f}</div><div class="metric-label">Total Spent</div></div>', unsafe_allow_html=True)
+                spent_str = " | ".join([f"{amt:.2f} {curr}" for curr, amt in currency_totals.items()])
+                st.markdown(f'<div class="metric-box"><div class="metric-value" style="font-size:1.1rem;">{spent_str}</div><div class="metric-label">Total Spent by Currency</div></div>', unsafe_allow_html=True)
 
             st.markdown("<br>", unsafe_allow_html=True)
 
