@@ -145,10 +145,17 @@ def load_data():
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+                if "stats" not in data:
+                    data["stats"] = {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0}
+                if "no_buy_start_date" not in data["stats"]:
+                    data["stats"]["no_buy_start_date"] = str(datetime.date.today())
+                if "xp" not in data["stats"]:
+                    data["stats"]["xp"] = 0
+                return data
         except Exception:
-            return {"products": [], "settings": {}, "stats": {"finished_lip_products": 0, "penalties": 0}}
-    return {"products": [], "settings": {}, "stats": {"finished_lip_products": 0, "penalties": 0}}
+            return {"products": [], "settings": {}, "stats": {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0}}
+    return {"products": [], "settings": {}, "stats": {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0}}
 
 def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
@@ -169,6 +176,16 @@ def calculate_days_owned(purchase_date_str):
 
 def calculate_cost_per_use(price, total_uses):
     return price if total_uses <= 0 else price / total_uses
+
+def get_pan_level(xp):
+    if xp < 50:
+        return "Novice Panner 🌱", 50
+    elif xp < 150:
+        return "Consistent Enthusiast 🌿", 150
+    elif xp < 300:
+        return "Expert Finisher 🌸", 300
+    else:
+        return "Master of the Pan 👑", 500
 
 def estimate_pan_completion(category, capacity, unit, daily_uses):
     if daily_uses <= 0 or capacity <= 0:
@@ -300,6 +317,7 @@ else:
                     with col_act:
                         if st.button("+ Log Use", key=f"quick_use_{p['id']}"):
                             p["total_uses"] = p.get("total_uses", 0) + 1
+                            st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + 5
                             save_data(st.session_state.db)
                             st.rerun()
 
@@ -323,6 +341,7 @@ else:
                     if st.button("Mark as Finished 🎉", key=f"fin_{p['id']}"):
                         if p["category"].lower() in LIP_CATEGORIES:
                             st.session_state.db["stats"]["finished_lip_products"] = st.session_state.db["stats"].get("finished_lip_products", 0) + 1
+                        st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + 50
                         st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
                         save_data(st.session_state.db)
                         st.rerun()
@@ -382,11 +401,22 @@ else:
 
     # --- PROJECT PAN ---
     elif st.session_state.current_page == "Project Pan":
-        st.markdown("### Project Pan")
+        st.markdown("### Project Pan (Gamified) 🌕")
+        
+        current_xp = st.session_state.db.get("stats", {}).get("xp", 0)
+        current_level_title, next_level_xp = get_pan_level(current_xp)
+        
+        st.markdown(f"""
+        <div class="vanity-card" style="background-color: #f7f3fd; text-align: center;">
+            <h4 style="margin:0; font-family:'Playfair Display', serif; color:#4a3468;">Rank: {current_level_title}</h4>
+            <p style="margin:5px 0 0 0; font-size: 0.9rem; color:#8c7aa9;">Total XP: <b>{current_xp} XP</b></p>
+        </div>
+        """, unsafe_allow_html=True)
+
         products = [p for p in st.session_state.db.get("products", []) if p.get("in_project_pan", False)]
 
         if not products:
-            st.info("No active items in Project Pan.")
+            st.info("No active items in Project Pan. Add items from your collection to start earning XP!")
         else:
             for p in products:
                 days = calculate_days_owned(p["purchase_date"])
@@ -425,8 +455,9 @@ else:
                     add_uses = st.number_input("Log Uses:", min_value=1, max_value=10, value=1, key=f"uses_{p['id']}")
                 with col_btn:
                     st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("Log Usage", key=f"btn_{p['id']}"):
+                    if st.button("Log Usage (+XP)", key=f"btn_{p['id']}"):
                         p["total_uses"] = p.get("total_uses", 0) + add_uses
+                        st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + (add_uses * 5)
                         save_data(st.session_state.db)
                         st.rerun()
 
@@ -437,6 +468,37 @@ else:
         st.markdown("### No - Buy & Rewards")
         stats = st.session_state.db.get("stats", {})
 
+        # Calculate No-Buy Days Streak
+        start_date_str = stats.get("no_buy_start_date", str(datetime.date.today()))
+        try:
+            start_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            streak_days = max((datetime.date.today() - start_date).days, 0)
+        except Exception:
+            streak_days = 0
+
+        st.markdown("#### No-Buy Streak Tracker")
+        sc1, sc2 = st.columns(2)
+        with sc1:
+            st.markdown(f'<div class="metric-box"><div class="metric-value">{streak_days}</div><div class="metric-label">Days Streak</div></div>', unsafe_allow_html=True)
+        with sc2:
+            new_start = st.date_input("Reset Streak Date", value=start_date if 'start_date' in locals() else datetime.date.today())
+            if st.button("Update Start Date"):
+                st.session_state.db["stats"]["no_buy_start_date"] = str(new_start)
+                save_data(st.session_state.db)
+                st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Oops I bought something penalty button
+        if st.button("🚨 Oops, I Bought Something (Reset Streak & -50 XP)"):
+            st.session_state.db["stats"]["no_buy_start_date"] = str(datetime.date.today())
+            current_xp = st.session_state.db["stats"].get("xp", 0)
+            st.session_state.db["stats"]["xp"] = max(current_xp - 50, 0)
+            save_data(st.session_state.db)
+            st.warning("No-buy streak reset to 0 days, and 50 XP penalty applied. Dust yourself off and start fresh!")
+            st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
         fin_lips = stats.get("finished_lip_products", 0)
         earned_tokens = fin_lips // 5
         lips_needed = 5 - (fin_lips % 5)
@@ -458,6 +520,28 @@ else:
         if not products:
             st.info("No data available.")
         else:
+            total_items = len(products)
+            total_spent = sum([p.get("price", 0.0) for p in products])
+            most_used = max(products, key=lambda x: x.get("total_uses", 0)) if products else None
+
+            st.markdown("#### Overview Metrics")
+            m_col1, m_col2 = st.columns(2)
+            with m_col1:
+                st.markdown(f'<div class="metric-box"><div class="metric-value">{total_items}</div><div class="metric-label">Total Items</div></div>', unsafe_allow_html=True)
+            with m_col2:
+                st.markdown(f'<div class="metric-box"><div class="metric-value">{total_spent:.2f}</div><div class="metric-label">Total Spent</div></div>', unsafe_allow_html=True)
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            if most_used and most_used.get("total_uses", 0) > 0:
+                st.markdown("#### Most Used Product Overall")
+                st.markdown(f"""
+                <div class="vanity-card">
+                    <h5 style="margin:0; font-family:'Playfair Display', serif;">{most_used['brand']} — {most_used['shade']}</h5>
+                    <p style="margin:4px 0 0 0; color:#635770; font-size:0.88rem;">Category: {most_used['category']} | <b>{most_used.get('total_uses', 0)} total uses</b></p>
+                </div>
+                """, unsafe_allow_html=True)
+
             st.markdown("#### Oldest Products in Collection")
             sorted_by_age = sorted(products, key=lambda x: calculate_days_owned(x["purchase_date"]), reverse=True)[:3]
             for p in sorted_by_age:
@@ -500,6 +584,7 @@ else:
                         "unit": unit, "total_uses": 0, "in_project_pan": in_pan, "image_b64": img_b64
                     }
                     st.session_state.db["products"].append(new_item)
+                    st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + 10
                     save_data(st.session_state.db)
                     st.success(f"Added {brand} - {shade}")
                     st.session_state.current_page = "Collection"
