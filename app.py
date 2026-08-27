@@ -577,7 +577,7 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-        # Fully interactive calendar date picker to customize/set the start date!
+        # Calendar Date Picker to customize the start date
         with st.form("no_buy_date_form"):
             new_start_date = st.date_input("Set or adjust No-Buy start date:", value=parsed_start_date)
             if st.form_submit_button("Update Start Date ✓"):
@@ -585,6 +585,17 @@ else:
                 save_data(st.session_state.db)
                 st.success("No-buy start date updated successfully!")
                 st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # "Oops I bought something" slip-up button (Resets streak + deducts 50 XP)
+        if st.button("🚨 Oops, I bought something (Reset Streak & -50 XP)"):
+            st.session_state.db["stats"]["no_buy_start_date"] = str(datetime.date.today())
+            current_xp_val = st.session_state.db["stats"].get("xp", 0)
+            st.session_state.db["stats"]["xp"] = max(current_xp_val - 50, 0)
+            save_data(st.session_state.db)
+            st.warning("No-buy streak reset to today, and -50 XP penalty applied.")
+            st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(f"""
