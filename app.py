@@ -467,6 +467,53 @@ else:
 
                 st.markdown("<br>", unsafe_allow_html=True)
 
+    # --- ADD PRODUCT ---
+    elif st.session_state.current_page == "Add Product":
+        st.markdown("### Add New Product ✨")
+        
+        with st.form("add_product_form"):
+            brand = st.text_input("Brand")
+            shade = st.text_input("Shade / Variant (Optional)")
+            category = st.selectbox("Category", CATEGORIES)
+            
+            ac1, ac2 = st.columns(2)
+            with ac1:
+                price = st.number_input("Price", min_value=0.0, value=0.0)
+                currency = st.selectbox("Currency", ["GBP", "PLN", "EUR", "USD"])
+                purchase_date = st.date_input("Purchase Date", value=datetime.date.today())
+            with ac2:
+                capacity = st.number_input("Capacity / Size", min_value=0.0, value=10.0)
+                unit = st.selectbox("Unit", ["ml", "g", "items"])
+                initial_uses = st.number_input("Initial Uses (if already used)", min_value=0, value=0)
+
+            in_pan = st.checkbox("Add directly to Project Pan 🌕")
+            
+            submitted = st.form_submit_button("Save Product 💾")
+            if submitted:
+                if not brand:
+                    st.error("Please enter a brand name.")
+                else:
+                    new_item = {
+                        "id": str(random.randint(100000, 999999)),
+                        "brand": brand,
+                        "shade": shade if shade else "N/A",
+                        "category": category,
+                        "price": float(price),
+                        "currency": currency,
+                        "purchase_date": str(purchase_date),
+                        "capacity": float(capacity),
+                        "unit": unit,
+                        "total_uses": int(initial_uses),
+                        "in_project_pan": in_pan
+                    }
+                    if "products" not in st.session_state.db:
+                        st.session_state.db["products"] = []
+                    st.session_state.db["products"].append(new_item)
+                    save_data(st.session_state.db)
+                    st.success("Product added successfully!")
+                    st.session_state.current_page = "Collection"
+                    st.rerun()
+
     # --- EMPTIES GRAVEYARD ---
     elif st.session_state.current_page == "Empties":
         st.markdown("### Empties Graveyard 🪦")
@@ -657,56 +704,141 @@ else:
                             st.session_state[pan_finishing_key] = None
                             st.rerun()
 
-                st.markdown("<br>", unsafe_allow_html=True)
+    # --- WISHLIST ---
+    elif st.session_state.current_page == "Wishlist":
+        st.markdown("### Wishlist ✨")
+        
+        with st.form("add_wishlist_form"):
+            w_brand = st.text_input("Brand")
+            w_product = st.text_input("Product Name / Shade")
+            w_price = st.number_input("Price", min_value=0.0, value=0.0)
+            w_currency = st.selectbox("Currency", ["GBP", "PLN", "EUR", "USD"], key="w_curr")
+            
+            if st.form_submit_button("Add to Wishlist ➕"):
+                if w_brand and w_product:
+                    if "wishlist" not in st.session_state.db:
+                        st.session_state.db["wishlist"] = []
+                    st.session_state.db["wishlist"].append({
+                        "id": str(random.randint(100000, 999999)),
+                        "brand": w_brand,
+                        "product": w_product,
+                        "price": float(w_price),
+                        "currency": w_currency
+                    })
+                    save_data(st.session_state.db)
+                    st.success("Added to wishlist!")
+                    st.rerun()
+                else:
+                    st.error("Please fill in the brand and product name.")
 
-    # --- BEAUTY STATS / ANALYTICS ---
+        st.markdown("<br>", unsafe_allow_html=True)
+        wishlist_items = st.session_state.db.get("wishlist", [])
+        
+        if not wishlist_items:
+            st.info("Your wishlist is empty.")
+        else:
+            for w in wishlist_items:
+                st.markdown(f"""
+                <div class="vanity-card">
+                    <h4 style="margin:0 0 0.2rem 0; font-family:'Playfair Display', serif;">{w['brand']} — {w['product']}</h4>
+                    <p style="margin:0; font-size:0.9rem; color:#8c7aa9;">Price: {w['price']:.2f} {w['currency']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                wc1, wc2 = st.columns(2)
+                with wc1:
+                    if st.button("Move to Collection 🎉", key=f"move_w_{w['id']}"):
+                        new_item = {
+                            "id": str(random.randint(100000, 999999)),
+                            "brand": w["brand"],
+                            "shade": w["product"],
+                            "category": "lipstick",
+                            "price": w["price"],
+                            "currency": w["currency"],
+                            "purchase_date": str(datetime.date.today()),
+                            "capacity": 10.0,
+                            "unit": "ml",
+                            "total_uses": 0,
+                            "in_project_pan": False
+                        }
+                        st.session_state.db["products"].append(new_item)
+                        st.session_state.db["wishlist"] = [item for item in st.session_state.db["wishlist"] if item["id"] != w["id"]]
+                        save_data(st.session_state.db)
+                        st.success("Moved to collection!")
+                        st.rerun()
+                with wc2:
+                    if st.button("Delete 🗑️", key=f"del_w_{w['id']}"):
+                        st.session_state.db["wishlist"] = [item for item in st.session_state.db["wishlist"] if item["id"] != w["id"]]
+                        save_data(st.session_state.db)
+                        st.rerun()
+
+    # --- NO-BUY RULES & REWARDS ---
+    elif st.session_state.current_page == "No-Buy Rules":
+        st.markdown("### No-Buy & Rewards 🌸")
+        
+        if st.session_state.get("show_lip_reward_banner", False):
+            st.markdown("""
+            <div style="background-color: #fce8f3; border: 1px solid #f7c5e2; border-radius: 6px; padding: 1.2rem; margin-bottom: 1rem; text-align: center;">
+                <h4 style="margin:0 0 0.3rem 0; font-family:'Playfair Display', serif; color: #8a3b6b;">🎉 Reward Unlocked! 🎉</h4>
+                <p style="margin:0; font-size:0.95rem; color: #6b3b52;">You've finished 5 lip products! Treat yourself to a guilt-free luxury coffee or small beauty treat!</p>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button("Claim & Dismiss Reward"):
+                st.session_state["show_lip_reward_banner"] = False
+                st.rerun()
+
+        stats = st.session_state.db.get("stats", {})
+        start_date_str = stats.get("no_buy_start_date", str(datetime.date.today()))
+        try:
+            start_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        except Exception:
+            start_date = datetime.date.today()
+            
+        no_buy_days = max((datetime.date.today() - start_date).days, 0)
+        finished_lips = stats.get("finished_lip_products", 0)
+
+        st.markdown(f"""
+        <div class="vanity-card" style="text-align: center;">
+            <h4 style="margin:0; font-family:'Playfair Display', serif; color:#4a3468;">No-Buy Track Record</h4>
+            <p style="font-size: 2rem; font-family:'Playfair Display', serif; color: #6b4c8c; margin: 10px 0 5px 0;">{no_buy_days} Days</p>
+            <p style="margin:0; font-size: 0.85rem; color:#8c7aa9;">Started on {start_date.strftime('%B %d, %Y')}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div class="vanity-card" style="text-align: center;">
+            <h4 style="margin:0; font-family:'Playfair Display', serif; color:#4a3468;">Lip Product Milestone</h4>
+            <p style="font-size: 2rem; font-family:'Playfair Display', serif; color: #6b4c8c; margin: 10px 0 5px 0;">{finished_lips} / 5</p>
+            <p style="margin:0; font-size: 0.85rem; color:#8c7aa9;">Finished lip items toward your next reward voucher.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("Reset No-Buy Tracker Date"):
+            st.session_state.db["stats"]["no_buy_start_date"] = str(datetime.date.today())
+            save_data(st.session_state.db)
+            st.success("No-buy start date reset to today!")
+            st.rerun()
+
+    # --- ANALYTICS ---
     elif st.session_state.current_page == "Analytics":
         st.markdown("### Beauty Stats 🐈‍⬛")
-        st.markdown("<p style='color:#8c7aa9; font-size:0.9rem;'>Insights and overview of your beauty sanctuary.</p>", unsafe_allow_html=True)
         
         products = st.session_state.db.get("products", [])
         empties = st.session_state.db.get("empties", [])
-        
         total_items = len(products)
+        total_spent = sum([p.get("price", 0) for p in products])
         total_empties = len(empties)
-        total_spent = sum([p.get("price", 0.0) for p in products])
-        
-        col_s1, col_s2, col_s3 = st.columns(3)
-        with col_s1:
+
+        col_a1, col_a2 = st.columns(2)
+        with col_a1:
             st.markdown(f'<div class="metric-box"><div class="metric-value">{total_items}</div><div class="metric-label">Active Items</div></div>', unsafe_allow_html=True)
-        with col_s2:
-            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_empties}</div><div class="metric-label">Empties</div></div>', unsafe_allow_html=True)
-        with col_s3:
-            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_spent:.1f}</div><div class="metric-label">Total Value</div></div>', unsafe_allow_html=True)
-            
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Most Loved Brands Chart Integration
-        st.markdown("#### 💖 Most Loved Brands")
-        if products:
-            df_products = pd.DataFrame(products)
-            if "brand" in df_products.columns and not df_products.empty:
-                brand_counts = df_products["brand"].value_counts().head(10)
-                st.bar_chart(brand_counts)
-                
-                top_brand = brand_counts.index[0]
-                top_count = brand_counts.iloc[0]
-                st.success(f"Your most collected brand is **{top_brand}** with **{top_count}** products!")
-            else:
-                st.info("No brand information found in your products.")
-        else:
-            st.info("Add some products to your collection to see your brand distribution chart.")
+        with col_a2:
+            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_empties}</div><div class="metric-label">Empties Panned</div></div>', unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Category Breakdown Chart Integration
-        st.markdown("#### 📊 Category Distribution")
-        if products:
-            df_cats = pd.DataFrame(products)
-            if "category" in df_cats.columns and not df_cats.empty:
-                cat_counts = df_cats["category"].value_counts()
-                st.bar_chart(cat_counts)
-            else:
-                st.info("No category information found.")
-        else:
-            st.info("Add products to view category breakdowns.")
+        st.markdown(f"""
+        <div class="vanity-card" style="text-align: center;">
+            <h4 style="margin:0; font-family:'Playfair Display', serif; color:#4a3468;">Active Collection Value</h4>
+            <p style="font-size: 1.8rem; font-family:'Playfair Display', serif; color: #6b4c8c; margin: 8px 0 0 0;">{total_spent:.2f}</p>
+        </div>
+        """, unsafe_allow_html=True)
