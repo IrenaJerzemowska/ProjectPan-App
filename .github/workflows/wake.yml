@@ -1,0 +1,14 @@
+name: Wake Streamlit App
+
+on:
+  schedule:
+    - cron: "0 */4 * * *" # Uruchamia się co 4 godziny
+  workflow_dispatch:
+
+jobs:
+  wake:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send request to keep app awake
+        run: |
+          curl -s -o /dev/null -w "%{http_code}\n" https://projectpan-app-zhtns7yn7gq68wb6nyugvm.streamlit.app/
