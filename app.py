@@ -468,6 +468,8 @@ else:
         st.markdown("<p style='color:#8c7aa9; font-size:0.9rem;'>Celebrating your successfully panned milestones.</p>", unsafe_allow_html=True)
         
         empties = st.session_state.db.get("empties", [])
+        edit_empty_key = "editing_empty_id"
+        
         if not empties:
             st.info("No empty products archived yet. Finish items from your collection to see them here!")
         else:
@@ -485,6 +487,40 @@ else:
                     {review_display}
                 </div>
                 """, unsafe_allow_html=True)
+                
+                ec1, ec2 = st.columns(2)
+                with ec1:
+                    if st.button("Edit Review ✏️", key=f"edit_empty_{e['id']}"):
+                        st.session_state[edit_empty_key] = e["id"]
+                        st.rerun()
+                with ec2:
+                    if st.button("Delete from Graveyard 🗑️", key=f"del_empty_{e['id']}"):
+                        st.session_state.db["empties"] = [item for item in st.session_state.db["empties"] if item["id"] != e["id"]]
+                        save_data(st.session_state.db)
+                        st.success("Removed item from Empties graveyard.")
+                        st.rerun()
+                        
+                if st.session_state.get(edit_empty_key) == e["id"]:
+                    with st.form(key=f"edit_empty_form_{e['id']}"):
+                        st.markdown(f"**Edit Review for {e['brand']} - {e['shade']}**")
+                        new_emp_rating = st.slider("Rating (Stars)", min_value=0, max_value=5, value=int(e.get("rating", 5)), step=1, key=f"er_{e['id']}")
+                        new_emp_review = st.text_area("Review", value=e.get("review", ""), key=f"ev_{e['id']}")
+                        
+                        erc1, erc2 = st.columns(2)
+                        with erc1:
+                            if st.form_submit_button("Update Review ✓"):
+                                e["rating"] = new_emp_rating
+                                e["review"] = new_emp_review
+                                save_data(st.session_state.db)
+                                st.session_state[edit_empty_key] = None
+                                st.success("Review updated successfully!")
+                                st.rerun()
+                        with erc2:
+                            if st.form_submit_button("Cancel"):
+                                st.session_state[edit_empty_key] = None
+                                st.rerun()
+
+                st.markdown("<br>", unsafe_allow_html=True)
 
     # --- PROJECT PAN ---
     elif st.session_state.current_page == "Project Pan":
@@ -714,8 +750,9 @@ else:
     elif st.session_state.current_page == "Analytics":
         st.markdown("### Beauty Stats")
         products = st.session_state.db.get("products", [])
+        empties = st.session_state.db.get("empties", [])
 
-        if not products:
+        if not products and not empties:
             st.info("No data available.")
         else:
             total_items = len(products)
@@ -730,12 +767,50 @@ else:
             st.markdown("#### Overview Metrics")
             m_col1, m_col2 = st.columns(2)
             with m_col1:
-                st.markdown(f'<div class="metric-box"><div class="metric-value">{total_items}</div><div class="metric-label">Total Items</div></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="metric-box"><div class="metric-value">{total_items}</div><div class="metric-label">Active Items</div></div>', unsafe_allow_html=True)
             with m_col2:
-                spent_str = " | ".join([f"{amt:.2f} {curr}" for curr, amt in currency_totals.items()])
-                st.markdown(f'<div class="metric-box"><div class="metric-value" style="font-size:1.1rem;">{spent_str}</div><div class="metric-label">Total Spent by Currency</div></div>', unsafe_allow_html=True)
+                spent_str = " | ".join([f"{amt:.2f} {curr}" for curr, amt in currency_totals.items()]) if currency_totals else "0.00"
+                st.markdown(f'<div class="metric-box"><div class="metric-value" style="font-size:1.1rem;">{spent_str}</div><div class="metric-label">Total Spent</div></div>', unsafe_allow_html=True)
 
             st.markdown("<br>", unsafe_allow_html=True)
+
+            # --- Graveyard Review Stats Integration ---
+            if empties:
+                st.markdown("#### Empties & Reviews Insights 🪦")
+                
+                total_empties = len(empties)
+                rated_empties = [e for e in empties if "rating" in e]
+                avg_rating = sum([e["rating"] for e in rated_empties]) / len(rated_empties) if rated_empties else 0.0
+                
+                # Best and worst rated items
+                best_empty = max(empties, key=lambda x: x.get("rating", 0), default=None)
+                worst_empty = min(empties, key=lambda x: x.get("rating", 5), default=None)
+                
+                s_col1, s_col2 = st.columns(2)
+                with s_col1:
+                    st.markdown(f'<div class="metric-box"><div class="metric-value">{total_empties}</div><div class="metric-label">Total Emptied</div></div>', unsafe_allow_html=True)
+                with s_col2:
+                    st.markdown(f'<div class="metric-box"><div class="metric-value">{avg_rating:.1f} / 5 ⭐</div><div class="metric-label">Average Grade</div></div>', unsafe_allow_html=True)
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                if best_empty:
+                    st.markdown(f"""
+                    <div class="vanity-card">
+                        <p style="margin:0 0 0.2rem 0; font-size:0.75rem; text-transform:uppercase; color:#8c7aa9; letter-spacing:1px;">Highest Graded Empty</p>
+                        <h5 style="margin:0; font-family:'Playfair Display', serif;">{best_empty['brand']} — {best_empty['shade']} ({best_empty.get('rating', 0)} ⭐)</h5>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                if worst_empty and worst_empty != best_empty:
+                    st.markdown(f"""
+                    <div class="vanity-card">
+                        <p style="margin:0 0 0.2rem 0; font-size:0.75rem; text-transform:uppercase; color:#8c7aa9; letter-spacing:1px;">Lowest Graded Empty</p>
+                        <h5 style="margin:0; font-family:'Playfair Display', serif;">{worst_empty['brand']} — {worst_empty['shade']} ({worst_empty.get('rating', 0)} ⭐)</h5>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                st.markdown("<br>", unsafe_allow_html=True)
 
             if most_used and most_used.get("total_uses", 0) > 0:
                 st.markdown("#### Most Used Product Overall")
@@ -746,16 +821,17 @@ else:
                 </div>
                 """, unsafe_allow_html=True)
 
-            st.markdown("#### Oldest Products in Collection")
-            sorted_by_age = sorted(products, key=lambda x: calculate_days_owned(x["purchase_date"]), reverse=True)[:3]
-            for p in sorted_by_age:
-                days = calculate_days_owned(p["purchase_date"])
-                st.markdown(f"""
-                <div class="vanity-card">
-                    <h5 style="margin:0; font-family:'Playfair Display', serif;">{p['brand']} — {p['shade']}</h5>
-                    <p style="margin:4px 0 0 0; color:#635770; font-size:0.85rem;">Owned for {days} days</p>
-                </div>
-                """, unsafe_allow_html=True)
+            if products:
+                st.markdown("#### Oldest Products in Collection")
+                sorted_by_age = sorted(products, key=lambda x: calculate_days_owned(x["purchase_date"]), reverse=True)[:3]
+                for p in sorted_by_age:
+                    days = calculate_days_owned(p["purchase_date"])
+                    st.markdown(f"""
+                    <div class="vanity-card">
+                        <h5 style="margin:0; font-family:'Playfair Display', serif;">{p['brand']} — {p['shade']}</h5>
+                        <p style="margin:4px 0 0 0; color:#635770; font-size:0.85rem;">Owned for {days} days</p>
+                    </div>
+                    """, unsafe_allow_html=True)
 
     # --- ADD PRODUCT ---
     elif st.session_state.current_page == "Add Product":
@@ -795,4 +871,3 @@ else:
                     st.rerun()
                 else:
                     st.error("Please fill in Brand.")
-  
