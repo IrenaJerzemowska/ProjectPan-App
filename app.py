@@ -5,7 +5,7 @@ import os
 import json
 
 # ---------------------------------------------------------
-# Konfiguracja Strony
+# Page Configuration & Navigation
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="Vanity Sanctuary",
@@ -14,17 +14,19 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Obsługa kliknięć z parametrów URL (Query Params)
+# Obsługa nawigacji po kliknięciu w kwadrat
 query_params = st.query_params
-if "nav" in query_params:
-    st.session_state.current_page = query_params["nav"]
+if "page" in query_params:
+    st.session_state.current_page = query_params["page"]
     st.query_params.clear()
     st.rerun()
 
 if "current_page" not in st.session_state:
     st.session_state.current_page = "Home"
 
-# Globalne style tła i układu
+# ---------------------------------------------------------
+# Global Styles (Tło i Ramki)
+# ---------------------------------------------------------
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
@@ -87,7 +89,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# Nagłówek
+# Header Block
 # ---------------------------------------------------------
 st.markdown("""
 <div class="sanctuary-header">
@@ -97,10 +99,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# STRONA GŁÓWNA: CZYSTE, DUŻE KWADRATOWE KAFELKI (HTML Component)
+# HOME PAGE (DUŻE, DUŻE KWADRATY I DUŻE EMOTKI)
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
 
+    # Czysty HTML/CSS komponentu kafelków
     grid_html = """
     <!DOCTYPE html>
     <html>
@@ -118,7 +121,7 @@ if st.session_state.current_page == "Home":
         .grid-container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 14px;
+            gap: 16px;
             width: 100%;
         }
 
@@ -126,12 +129,12 @@ if st.session_state.current_page == "Home":
             background-color: #ffffff;
             border: 1px solid #e2d8ee;
             border-radius: 4px;
-            aspect-ratio: 1 / 1;
+            height: 180px; /* Sztywna duża wysokość */
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 10px 15px 10px;
+            padding: 22px 10px 18px 10px;
             box-sizing: border-box;
             text-decoration: none;
             box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06);
@@ -149,34 +152,34 @@ if st.session_state.current_page == "Home":
             font-size: 1.35rem;
             font-weight: 700;
             color: #554a60;
-            line-height: 1.25;
+            line-height: 1.2;
             text-align: center;
             margin: 0;
         }
 
         .tile-emoji {
-            font-size: 4rem;
+            font-size: 4rem; /* DUŻA EMOTKA */
             line-height: 1;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
     </style>
     </head>
     <body>
 
     <div class="grid-container">
-        <a class="tile-card" href="?nav=Collection" target="_top">
+        <a class="tile-card" href="?page=Collection" target="_top">
             <div class="tile-title">Your<br>Collection</div>
             <div class="tile-emoji">🦇</div>
         </a>
-        <a class="tile-card" href="?nav=Project Pan" target="_top">
+        <a class="tile-card" href="?page=Project Pan" target="_top">
             <div class="tile-title">Project<br>Pan</div>
             <div class="tile-emoji">🌕</div>
         </a>
-        <a class="tile-card" href="?nav=No-Buy Rules" target="_top">
+        <a class="tile-card" href="?page=No-Buy Rules" target="_top">
             <div class="tile-title">No - Buy<br>& Rewards</div>
             <div class="tile-emoji">🌸</div>
         </a>
-        <a class="tile-card" href="?nav=Analytics" target="_top">
+        <a class="tile-card" href="?page=Analytics" target="_top">
             <div class="tile-title">Beauty<br>stats</div>
             <div class="tile-emoji">🐈‍⬛</div>
         </a>
@@ -186,10 +189,9 @@ if st.session_state.current_page == "Home":
     </html>
     """
 
-    # Osadzenie komponentu kafelków
-    st.components.v1.html(grid_html, height=420)
+    st.components.v1.html(grid_html, height=385)
 
-    # Cytat na dole
+    # Dolny cytat
     st.markdown("""
     <div class="quote-card">
         <p>Use what you love.<br>Finish what you start.</p>
@@ -197,7 +199,7 @@ if st.session_state.current_page == "Home":
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# STRONY WEWNĘTRZNE
+# INNER PAGES
 # ---------------------------------------------------------
 else:
     if st.button("← Back to Menu"):
@@ -208,16 +210,12 @@ else:
 
     if st.session_state.current_page == "Collection":
         st.markdown("### Your Collection")
-        st.info("Kolekcja kosmetyków...")
 
     elif st.session_state.current_page == "Project Pan":
         st.markdown("### Project Pan")
-        st.info("Twoje aktywne zużycia...")
 
     elif st.session_state.current_page == "No-Buy Rules":
         st.markdown("### No - Buy & Rewards")
-        st.info("Zasady i nagrody...")
 
     elif st.session_state.current_page == "Analytics":
         st.markdown("### Beauty Stats")
-        st.info("Statystyki...")
