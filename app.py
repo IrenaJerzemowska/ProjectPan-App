@@ -105,17 +105,18 @@ st.markdown("""
         text-align: center !important;
     }
 
-    /* Compact 2-column layout with tight spacing */
+    /* Force strict 2-column layout side-by-side on mobile and desktop */
     div[data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        gap: 4px !important;
-        margin-bottom: 4px !important;
+        gap: 6px !important;
+        margin-bottom: 6px !important;
+        width: 100% !important;
     }
 
     div[data-testid="column"] {
-        flex: 1 !important;
+        flex: 1 1 50% !important;
         width: 50% !important;
         min-width: 50% !important;
         max-width: 50% !important;
