@@ -3,12 +3,9 @@ import pandas as pd
 import datetime
 import os
 import json
-import base64
-from PIL import Image
-import io
 
 # ---------------------------------------------------------
-# Page Configuration & Global Styles
+# Konfiguracja Strony
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="Vanity Sanctuary",
@@ -17,6 +14,17 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Obsługa kliknięć z parametrów URL (Query Params)
+query_params = st.query_params
+if "nav" in query_params:
+    st.session_state.current_page = query_params["nav"]
+    st.query_params.clear()
+    st.rerun()
+
+if "current_page" not in st.session_state:
+    st.session_state.current_page = "Home"
+
+# Globalne style tła i układu
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
@@ -59,67 +67,13 @@ st.markdown("""
         margin-bottom: 0;
     }
 
-    div[data-testid="stHorizontalBlock"] {
-        gap: 14px !important;
-        margin-bottom: 14px !important;
-    }
-
-    /* Ukrywamy domyślny wygląd i marginesy przycisków wewnątrz kolumn */
-    div[data-testid="column"] .stButton {
-        width: 100%;
-        margin: 0;
-    }
-
-    /* Wymuszamy idealny kwadrat z dużym padingiem dla przycisku */
-    div[data-testid="column"] button {
-        background-color: #ffffff !important;
-        border: 1px solid #e2d8ee !important;
-        border-radius: 6px !important;
-        width: 100% !important;
-        aspect-ratio: 1 / 1 !important;
-        height: auto !important;
-        min-height: 0 !important;
-        padding: 1rem 0.5rem !important;
-        box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06) !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-    }
-
-    div[data-testid="column"] button:hover {
-        transform: translateY(-3px) !important;
-        box-shadow: 0 8px 18px rgba(100, 80, 130, 0.12) !important;
-        background-color: #ffffff !important;
-    }
-
-    /* Wygląd nagłówka w kwadracie */
-    .tile-title {
-        font-family: 'Playfair Display', serif !important;
-        font-size: 1.3rem !important;
-        font-weight: 700 !important;
-        color: #554a60 !important;
-        line-height: 1.2 !important;
-        text-align: center !important;
-        margin-top: 0.4rem !important;
-    }
-
-    /* DUŻA EMOTKA W ŚRODKU */
-    .tile-icon {
-        font-size: 3.8rem !important;
-        line-height: 1 !important;
-        margin-bottom: 0.4rem !important;
-        display: block !important;
-    }
-
     .quote-card {
         background: #ffffff;
         border: 2px solid #3a3342 !important;
         border-radius: 2px;
         padding: 2.2rem 1.5rem;
         text-align: center;
-        margin-top: 6px;
+        margin-top: 18px;
     }
 
     .quote-card p {
@@ -129,50 +83,11 @@ st.markdown("""
         margin: 0;
         line-height: 1.4;
     }
-
-    .vanity-card {
-        background: #ffffff;
-        border-radius: 4px;
-        padding: 1.2rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 3px 10px rgba(130, 110, 160, 0.05);
-    }
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# Data Storage & State Initialization
-# ---------------------------------------------------------
-DATA_FILE = "vanity_data.json"
-
-CATEGORIES = [
-    "foundation", "concealer", "powder", "contour", "blush", 
-    "highlighter", "eyeshadow palette", "lip gloss", "lipstick", 
-    "eyeliner", "mascara", "lip liner", "lip mask", 
-    "setting spray", "brow gel", "brow pen"
-]
-
-def load_data():
-    if os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            return {"products": [], "settings": {}, "stats": {"finished_lip_products": 0, "penalties": 0}}
-    return {"products": [], "settings": {}, "stats": {"finished_lip_products": 0, "penalties": 0}}
-
-def save_data(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4)
-
-if "db" not in st.session_state:
-    st.session_state.db = load_data()
-
-if "current_page" not in st.session_state:
-    st.session_state.current_page = "Home"
-
-# ---------------------------------------------------------
-# Header Block
+# Nagłówek
 # ---------------------------------------------------------
 st.markdown("""
 <div class="sanctuary-header">
@@ -182,39 +97,99 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# HOME PAGE (IDEALNE KWADRATOWE KAFELKI Z DUŻYMI EMOTKAMI)
+# STRONA GŁÓWNA: CZYSTE, DUŻE KWADRATOWE KAFELKI (HTML Component)
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
 
-    # Pomocnicza funkcja generująca html wewnątrz st.button
-    def render_tile(title_html, emoji):
-        return f'<span class="tile-title">{title_html}</span><span class="tile-icon">{emoji}</span>'
+    grid_html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
 
-    # Rząd 1
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button(render_tile("Your<br>Collection", "🦇"), key="btn_coll"):
-            st.session_state.current_page = "Collection"
-            st.rerun()
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: transparent;
+            font-family: 'Playfair Display', serif;
+        }
 
-    with col2:
-        if st.button(render_tile("Project<br>Pan", "🌕"), key="btn_pan"):
-            st.session_state.current_page = "Project Pan"
-            st.rerun()
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            width: 100%;
+        }
 
-    # Rząd 2
-    col3, col4 = st.columns(2)
-    with col3:
-        if st.button(render_tile("No - Buy<br>& Rewards", "🌸"), key="btn_nobuy"):
-            st.session_state.current_page = "No-Buy Rules"
-            st.rerun()
+        .tile-card {
+            background-color: #ffffff;
+            border: 1px solid #e2d8ee;
+            border-radius: 4px;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 10px 15px 10px;
+            box-sizing: border-box;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            cursor: pointer;
+        }
 
-    with col4:
-        if st.button(render_tile("Beauty<br>stats", "🐈‍⬛"), key="btn_stats"):
-            st.session_state.current_page = "Analytics"
-            st.rerun()
+        .tile-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 18px rgba(100, 80, 130, 0.12);
+            border-color: #cbbba6;
+        }
 
-    # Quote Box
+        .tile-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #554a60;
+            line-height: 1.25;
+            text-align: center;
+            margin: 0;
+        }
+
+        .tile-emoji {
+            font-size: 4rem;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+    </style>
+    </head>
+    <body>
+
+    <div class="grid-container">
+        <a class="tile-card" href="?nav=Collection" target="_top">
+            <div class="tile-title">Your<br>Collection</div>
+            <div class="tile-emoji">🦇</div>
+        </a>
+        <a class="tile-card" href="?nav=Project Pan" target="_top">
+            <div class="tile-title">Project<br>Pan</div>
+            <div class="tile-emoji">🌕</div>
+        </a>
+        <a class="tile-card" href="?nav=No-Buy Rules" target="_top">
+            <div class="tile-title">No - Buy<br>& Rewards</div>
+            <div class="tile-emoji">🌸</div>
+        </a>
+        <a class="tile-card" href="?nav=Analytics" target="_top">
+            <div class="tile-title">Beauty<br>stats</div>
+            <div class="tile-emoji">🐈‍⬛</div>
+        </a>
+    </div>
+
+    </body>
+    </html>
+    """
+
+    # Osadzenie komponentu kafelków
+    st.components.v1.html(grid_html, height=420)
+
+    # Cytat na dole
     st.markdown("""
     <div class="quote-card">
         <p>Use what you love.<br>Finish what you start.</p>
@@ -222,7 +197,7 @@ if st.session_state.current_page == "Home":
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# INNER PAGES
+# STRONY WEWNĘTRZNE
 # ---------------------------------------------------------
 else:
     if st.button("← Back to Menu"):
@@ -233,18 +208,16 @@ else:
 
     if st.session_state.current_page == "Collection":
         st.markdown("### Your Collection")
-        if st.button("+ Add New Product to Collection"):
-            st.session_state.current_page = "Add Product"
-            st.rerun()
+        st.info("Kolekcja kosmetyków...")
 
     elif st.session_state.current_page == "Project Pan":
         st.markdown("### Project Pan")
+        st.info("Twoje aktywne zużycia...")
 
     elif st.session_state.current_page == "No-Buy Rules":
         st.markdown("### No - Buy & Rewards")
+        st.info("Zasady i nagrody...")
 
     elif st.session_state.current_page == "Analytics":
         st.markdown("### Beauty Stats")
-
-    elif st.session_state.current_page == "Add Product":
-        st.markdown("### Add Product")
+        st.info("Statystyki...")
