@@ -6,110 +6,110 @@ import json
 import base64
 from PIL import Image
 import io
-from collections import Counter
 
 # ---------------------------------------------------------
-# Page Configuration & Modern Yennefer-Lilac Theme
+# Page Configuration & Soft Lilac Aesthetics
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="Vanity Sanctuary",
-    page_icon="🔮",
+    page_icon="✨",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap');
 
-    /* Main background & base typography */
+    /* Dreamy Pastel Background with subtle stars pattern */
     .stApp {
-        background-color: #0b0c10;
-        color: #e5e7eb;
-        font-family: 'Inter', sans-serif;
+        background-color: #e2d9f3;
+        background-image: radial-gradient(rgba(255, 255, 255, 0.8) 2px, transparent 20px), radial-gradient(rgba(255, 255, 255, 0.8) 1.5px, transparent 15px);
+        background-size: 80px 80px, 40px 40px;
+        background-position: 0 0, 20px 20px;
+        color: #382a4b;
+        font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
-    /* Headings - Yennefer Elegance */
+    /* Headings - Serif Classic */
     h1, h2, h3, h4, h5, h6 {
-        font-family: 'Cinzel', serif !important;
-        color: #f3e8ff !important;
+        font-family: 'Playfair Display', serif !important;
+        color: #2e1f43 !important;
         font-weight: 600 !important;
-        letter-spacing: 1.5px !important;
     }
 
     /* Header Banner */
-    .yennefer-header {
-        background: linear-gradient(180deg, #181922 0%, #0b0c10 100%);
-        border-bottom: 1px solid #3b2d54;
-        padding: 2rem 1rem;
+    .sanctuary-header {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        border-radius: 16px;
+        padding: 2.5rem 1.5rem;
         text-align: center;
         margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(138, 115, 175, 0.12);
     }
 
-    .yennefer-header h1 {
-        font-size: 2.4rem !important;
-        margin-bottom: 0.3rem !important;
-        color: #e9d5ff !important;
+    .sanctuary-header h1 {
+        font-size: 2.5rem !important;
+        margin-bottom: 0.2rem !important;
+        letter-spacing: -0.5px;
     }
 
-    .yennefer-header p {
-        color: #a855f7;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
+    .sanctuary-header p {
+        color: #8c7aa9;
+        font-size: 1.1rem;
+        font-family: 'Playfair Display', serif;
+        font-style: italic;
         margin: 0;
     }
 
     /* Sidebar Styling */
     [data-testid="stSidebar"] {
-        background-color: #111318;
-        border-right: 1px solid #232733;
+        background-color: rgba(245, 240, 252, 0.7);
+        backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(255, 255, 255, 0.6);
     }
 
-    /* Minimalist Cards */
+    /* White Aesthetic Cards */
     .vanity-card {
-        background-color: #151720;
-        border: 1px solid #2d2b3d;
-        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(255, 255, 255, 1);
+        border-radius: 14px;
         padding: 1.5rem;
         margin-bottom: 1.2rem;
-        transition: border 0.2s ease;
-    }
-
-    .vanity-card:hover {
-        border-color: #7e22ce;
+        box-shadow: 0 8px 20px rgba(150, 130, 180, 0.08);
     }
 
     /* Badges */
     .lilac-badge {
-        background-color: #2e1d40;
-        color: #d8b4fe;
-        padding: 3px 10px;
-        border-radius: 4px;
+        background-color: #ebdffc;
+        color: #5d3b8e;
+        padding: 4px 12px;
+        border-radius: 20px;
         font-size: 0.75rem;
-        border: 1px solid #5b21b6;
-        letter-spacing: 1px;
-        font-weight: 500;
+        font-weight: 600;
+        letter-spacing: 0.5px;
         text-transform: uppercase;
     }
 
     /* Metric Display Box */
     .metric-box {
-        background-color: #1a1c27;
-        border: 1px solid #2e3346;
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid #e2d3f7;
         padding: 1rem;
-        border-radius: 6px;
+        border-radius: 12px;
         text-align: center;
     }
     .metric-box .metric-value {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
         font-weight: 600;
-        color: #c084fc;
-        font-family: 'Cinzel', serif;
+        color: #51337a;
+        font-family: 'Playfair Display', serif;
     }
     .metric-box .metric-label {
-        font-size: 0.7rem;
-        color: #9ca3af;
+        font-size: 0.72rem;
+        color: #7d6b98;
         text-transform: uppercase;
         letter-spacing: 1px;
         margin-top: 4px;
@@ -117,33 +117,34 @@ st.markdown("""
 
     /* Buttons */
     .stButton > button {
-        background-color: #1f1d2b;
-        color: #e9d5ff !important;
-        border: 1px solid #6b21a8;
-        border-radius: 4px;
-        font-family: 'Inter', sans-serif;
-        font-size: 0.85rem;
+        background: #fdfbff;
+        color: #4a326d !important;
+        border: 1px solid #d4c2ed;
+        border-radius: 10px;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-size: 0.88rem;
         font-weight: 500;
-        letter-spacing: 0.5px;
         transition: all 0.2s ease;
         width: 100%;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
     }
 
     .stButton > button:hover {
-        background-color: #6b21a8;
+        background-color: #5d3b8e;
         color: #ffffff !important;
-        border-color: #c084fc;
+        border-color: #5d3b8e;
     }
 
-    /* Form Inputs Contrast Fix */
+    /* Inputs */
     div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {
-        background-color: #151720 !important;
-        border-color: #2d3142 !important;
-        color: #f3e8ff !important;
+        background-color: rgba(255, 255, 255, 0.9) !important;
+        border-color: #d8c7f0 !important;
+        color: #2e1f43 !important;
+        border-radius: 8px !important;
     }
 
     hr {
-        border-color: #232733 !important;
+        border-color: #dcd0f0 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -209,13 +210,13 @@ def image_to_base64(uploaded_file):
 # Header & Navigation
 # ---------------------------------------------------------
 st.markdown("""
-<div class="yennefer-header">
-    <h1>VANITY SANCTUARY</h1>
-    <p>Minimalist Inventory & Project Pan</p>
+<div class="sanctuary-header">
+    <h1>Vanity Sanctuary</h1>
+    <p>Minimalist inventory & project pan</p>
 </div>
 """, unsafe_allow_html=True)
 
-st.sidebar.markdown("<h3 style='text-align:center; font-size:1.1rem;'>NAVIGATION</h3>", unsafe_allow_html=True)
+st.sidebar.markdown("<h3 style='text-align:center; font-size:1.2rem; margin-bottom:1rem;'>Sanctuary</h3>", unsafe_allow_html=True)
 nav = st.sidebar.radio(
     "", 
     ["Collection", "Project Pan", "No-Buy Rules", "Analytics", "Add Product"]
@@ -225,11 +226,15 @@ nav = st.sidebar.radio(
 # TAB 1: COLLECTION
 # ---------------------------------------------------------
 if nav == "Collection":
-    st.markdown("### Collection Overview")
+    st.markdown("### Collection overview")
     products = st.session_state.db.get("products", [])
 
     if not products:
-        st.info("Your collection is currently empty.")
+        st.markdown("""
+        <div class="vanity-card" style="text-align:center; padding:2rem;">
+            <p style="color:#7d6b98; margin:0; font-size:1.05rem;">Your collection is currently empty.</p>
+        </div>
+        """, unsafe_allow_html=True)
     else:
         filter_cat = st.selectbox("Category Filter", ["All Categories"] + CATEGORIES)
         filtered_products = [p for p in products if filter_cat == "All Categories" or p["category"].lower() == filter_cat.lower()]
@@ -244,8 +249,8 @@ if nav == "Collection":
             <div class="vanity-card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
                     <div>
-                        <h4 style="margin:0; font-size:1.1rem; color:#f3e8ff;">{p['brand']} <span style="font-weight:300; color:#d8b4fe;">— {p['name']}</span></h4>
-                        <span style="font-size:0.85rem; color:#9ca3af;">Shade: {p['shade']}</span>
+                        <h4 style="margin:0; font-size:1.15rem; color:#2e1f43;">{p['brand']} <span style="font-weight:400; color:#6b538c;">— {p['name']}</span></h4>
+                        <span style="font-size:0.85rem; color:#7d6b98;">Shade: {p['shade']}</span>
                     </div>
                     <span class="lilac-badge">{p['category']}</span>
                 </div>
@@ -254,13 +259,13 @@ if nav == "Collection":
             col_img, col_info = st.columns([1, 2])
             with col_img:
                 if p.get("image_b64"):
-                    st.markdown(f'<img src="data:image/png;base64,{p["image_b64"]}" style="width:100%; border-radius:4px; border:1px solid #2d3142;">', unsafe_allow_html=True)
+                    st.markdown(f'<img src="data:image/png;base64,{p["image_b64"]}" style="width:100%; border-radius:8px; border:1px solid #e2d3f7;">', unsafe_allow_html=True)
                 else:
-                    st.markdown('<div style="width:100%; height:110px; background-color:#1a1c27; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#4b5563; font-size:0.8rem; border:1px solid #2d3142;">NO IMAGE</div>', unsafe_allow_html=True)
+                    st.markdown('<div style="width:100%; height:110px; background-color:#f4eefc; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#9c8bba; font-size:0.8rem; border:1px solid #e2d3f7;">NO IMAGE</div>', unsafe_allow_html=True)
 
             with col_info:
                 st.markdown(f"""
-                <div style="font-size:0.88rem; line-height:1.6; color:#d1d5db;">
+                <div style="font-size:0.9rem; line-height:1.6; color:#4a3963;">
                     <strong>Price:</strong> {p['price']:.2f} {p['currency']}<br>
                     <strong>Age:</strong> {days} days owned<br>
                     <strong>Total Uses:</strong> {p.get('total_uses', 0)}<br>
@@ -272,13 +277,13 @@ if nav == "Collection":
             c1, c2 = st.columns(2)
             with c1:
                 is_pan = p.get("in_project_pan", False)
-                btn_label = "Remove from Project Pan" if is_pan else "Add to Project Pan"
+                btn_label = "Remove from Project Pan" if is_pan else "Add to Project Pan ✨"
                 if st.button(btn_label, key=f"pan_{p['id']}"):
                     p["in_project_pan"] = not is_pan
                     save_data(st.session_state.db)
                     st.rerun()
             with c2:
-                if st.button("Mark as Finished ✨", key=f"fin_{p['id']}"):
+                if st.button("Mark as Finished 🎉", key=f"fin_{p['id']}"):
                     if p["category"].lower() in LIP_CATEGORIES:
                         st.session_state.db["stats"]["finished_lip_products"] = st.session_state.db["stats"].get("finished_lip_products", 0) + 1
                     st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
@@ -304,7 +309,7 @@ elif nav == "Project Pan":
 
             st.markdown(f"""
             <div class="vanity-card">
-                <h4 style="margin:0 0 1rem 0;">{p['brand']} — {p['name']} <span style="color:#a855f7; font-size:0.9rem;">({p['shade']})</span></h4>
+                <h4 style="margin:0 0 1rem 0;">{p['brand']} — {p['name']} <span style="color:#7d6b98; font-size:0.9rem;">({p['shade']})</span></h4>
             """, unsafe_allow_html=True)
 
             m1, m2, m3 = st.columns(3)
@@ -355,9 +360,9 @@ elif nav == "No-Buy Rules":
     
     p1, p2 = st.columns(2)
     with p1:
-        st.markdown(f'<div class="metric-box" style="border-color:#7f1d1d;"><div class="metric-value" style="color:#f87171;">{penalties}</div><div class="metric-label">Penalty Points</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-box" style="border-color:#f3a4b5;"><div class="metric-value" style="color:#c0392b;">{penalties}</div><div class="metric-label">Penalty Points</div></div>', unsafe_allow_html=True)
     with p2:
-        status_text = "Clean Streak" if penalties == 0 else "Rules Broken"
+        status_text = "Clean Streak ✨" if penalties == 0 else "Rules Broken 💔"
         st.markdown(f'<div class="metric-box"><div class="metric-value">{status_text}</div><div class="metric-label">Status</div></div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------
@@ -381,8 +386,8 @@ elif nav == "Analytics":
                 <div class="vanity-card" style="padding:1rem;">
                     <span class="lilac-badge">#{idx+1} OLDEST</span>
                     <h5 style="margin:0.5rem 0 0.2rem 0; font-size:0.95rem;">{p['brand']}</h5>
-                    <p style="font-size:0.8rem; color:#9ca3af; margin:0;">{p['name']}</p>
-                    <p style="color:#c084fc; font-weight:600; font-size:0.85rem; margin-top:0.4rem;">{days} days old</p>
+                    <p style="font-size:0.8rem; color:#7d6b98; margin:0;">{p['name']}</p>
+                    <p style="color:#5d3b8e; font-weight:600; font-size:0.85rem; margin-top:0.4rem;">{days} days old</p>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -413,7 +418,7 @@ elif nav == "Add Product":
         in_pan = st.checkbox("Add to Project Pan immediately", value=True)
         uploaded_img = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
 
-        if st.form_submit_button("Add to Sanctuary"):
+        if st.form_submit_button("Add to Sanctuary ✨"):
             if name and brand:
                 if category.lower() in LIP_CATEGORIES:
                     if earned_tokens > 0:
@@ -436,8 +441,4 @@ elif nav == "Add Product":
                 st.rerun()
             else:
                 st.error("Please enter Name and Brand.")
-
-
-    
-     
-
+ 
