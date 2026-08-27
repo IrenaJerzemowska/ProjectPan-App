@@ -642,7 +642,8 @@ else:
                     st.markdown(f'<div class="metric-box"><div class="metric-value">{cpu:.2f} {p["currency"]}</div><div class="metric-label">Cost / Use</div></div>', unsafe_allow_html=True)
 
                 st.markdown("<br>", unsafe_allow_html=True)
-                daily_uses_input = st.number_input("Estimated daily applications:", min_value=0.1, max_value=5.0, value=1.0, step=0.1, key=f"d_uses_{p['id']}")
+                # Updated to use clean integer steps (1 application = 1)
+                daily_uses_input = st.number_input("Estimated daily applications:", min_value=1, max_value=5, value=1, step=1, key=f"d_uses_{p['id']}")
                 
                 d_needed, target_date, total_apps_needed = estimate_pan_completion(p["category"], p.get("capacity", 10.0), p.get("unit", "ml"), daily_uses_input)
                 if d_needed and total_apps_needed > 0:
@@ -662,7 +663,7 @@ else:
                 st.markdown("<br>", unsafe_allow_html=True)
                 col_add, col_btn = st.columns([2, 1])
                 with col_add:
-                    add_uses = st.number_input("Log Uses:", min_value=1, max_value=10, value=1, key=f"uses_{p['id']}")
+                    add_uses = st.number_input("Log Uses:", min_value=1, max_value=10, value=1, step=1, key=f"uses_{p['id']}")
                 with col_btn:
                     st.markdown("<br>", unsafe_allow_html=True)
                     if st.button("Log (+XP)", key=f"btn_{p['id']}"):
@@ -825,6 +826,14 @@ else:
             <p style="margin:0; font-size: 0.85rem; color:#8c7aa9;">Finished lip items toward your next reward voucher.</p>
         </div>
         """, unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Oops, I bought something 🛍️", use_container_width=True):
+            st.session_state.db["stats"]["no_buy_start_date"] = str(datetime.date.today())
+            st.session_state.db["stats"]["xp"] = max(0, st.session_state.db["stats"].get("xp", 0) - 50)
+            save_data(st.session_state.db)
+            st.warning("No-buy streak reset and 50 XP deducted. Dust yourself off and try again!")
+            st.rerun()
 
     # --- ANALYTICS ---
     elif st.session_state.current_page == "Analytics":
