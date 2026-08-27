@@ -17,11 +17,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Obsługa nawigacji przez parametry URL (gwarantuje idealny wygląd HTML/CSS)
-query_params = st.query_params
-if "page" in query_params:
-    st.session_state.current_page = query_params["page"]
-
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
@@ -33,9 +28,9 @@ st.markdown("""
         font-family: 'Lora', serif;
     }
 
-    /* Szerokość głównego kontenera */
-    .block-container {
-        max-width: 460px !important;
+    /* Szerokość kontenera jak na zdjęciu */
+    .main .block-container {
+        max-width: 440px !important;
         padding-top: 1.5rem !important;
         padding-bottom: 2rem !important;
         padding-left: 1rem !important;
@@ -45,16 +40,16 @@ st.markdown("""
     /* Nagłówek aplikacji */
     .sanctuary-header {
         background: #ffffff;
-        border-radius: 2px;
+        border-radius: 4px;
         padding: 2.2rem 1rem 1.8rem 1rem;
         text-align: center;
-        margin-bottom: 16px;
+        margin-bottom: 18px;
         box-shadow: 0 4px 15px rgba(120, 100, 150, 0.04);
     }
 
     .sanctuary-header h1 {
         font-family: 'Playfair Display', serif !important;
-        font-size: 2.5rem !important;
+        font-size: 2.4rem !important;
         color: #3a3342 !important;
         margin: 0 !important;
         font-weight: 700 !important;
@@ -71,57 +66,68 @@ st.markdown("""
         font-weight: 400;
     }
 
-    /* SIATKA KAFELKÓW NAWIGACYJNYCH (IDEALNE KWADRATY) */
-    .grid-container {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 14px;
-        margin-bottom: 16px;
+    /* TYLKO DLA STRONY GŁÓWNEJ - Stylizacja idealnych kwadratów */
+    div[data-testid="stHorizontalBlock"] {
+        gap: 14px !important;
+        margin-bottom: 14px !important;
     }
 
-    .tile-button {
+    div[data-testid="column"] {
+        position: relative !important;
+    }
+
+    /* Wizualna karta kwadratowa w tle */
+    .custom-tile {
         background-color: #ffffff;
-        border-radius: 2px;
-        aspect-ratio: 1 / 1;
+        border: 1px solid #e2d8ee;
+        border-radius: 4px;
         width: 100%;
+        aspect-ratio: 1 / 1;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        text-decoration: none !important;
-        box-shadow: 0 3px 10px rgba(130, 110, 160, 0.05);
-        transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        justify-content: space-between;
+        padding: 1.5rem 0.8rem 1.2rem 0.8rem;
+        box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06);
         box-sizing: border-box;
-        padding: 1rem;
     }
 
-    .tile-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 14px rgba(110, 90, 140, 0.12);
-    }
-
-    .tile-title {
+    .custom-tile-title {
         font-family: 'Playfair Display', serif;
-        font-size: 1.45rem;
+        font-size: 1.35rem;
         font-weight: 700;
-        color: #4a4253;
+        color: #554a60;
         text-align: center;
-        line-height: 1.2;
-        margin-bottom: 0.8rem;
+        line-height: 1.25;
+        margin: 0;
     }
 
-    .tile-emoji {
-        font-size: 1.6rem;
+    .custom-tile-icon {
+        font-size: 2.8rem;
         line-height: 1;
+        margin-bottom: 0.2rem;
     }
 
-    /* Dolna karta z cytatem */
+    /* Przezroczysty przycisk Streamlit nałożony na całą kartę */
+    .overlay-button > button {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        opacity: 0 !important;
+        z-index: 10 !important;
+        cursor: pointer !important;
+    }
+
+    /* Dolna karta z cytatem i czarną ramką */
     .quote-card {
         background: #ffffff;
-        border: 2px solid #3a3342;
+        border: 2px solid #3a3342 !important;
         border-radius: 2px;
         padding: 2.2rem 1.5rem;
         text-align: center;
+        margin-top: 6px;
     }
 
     .quote-card p {
@@ -133,7 +139,7 @@ st.markdown("""
         letter-spacing: 0.2px;
     }
 
-    /* Karty na podstronach */
+    /* Inner Cards */
     .vanity-card {
         background: #ffffff;
         border-radius: 4px;
@@ -163,6 +169,7 @@ st.markdown("""
         margin-top: 2px;
     }
 
+    /* Form Fields */
     div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
         border-color: #cbbad9 !important;
@@ -234,30 +241,65 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# PAGE 1: HOME (Kwadratowa Siatka HTML/CSS)
+# PAGE 1: HOME (Symmetrical Pixel-Perfect Grid)
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
 
-    st.markdown("""
-    <div class="grid-container">
-        <a href="?page=Collection" target="_self" class="tile-button">
-            <div class="tile-title">Your<br>Collection</div>
-            <div class="tile-emoji">🦇</div>
-        </a>
-        <a href="?page=Project+Pan" target="_self" class="tile-button">
-            <div class="tile-title">Project<br>Pan</div>
-            <div class="tile-emoji">🌕</div>
-        </a>
-        <a href="?page=No-Buy+Rules" target="_self" class="tile-button">
-            <div class="tile-title">No - Buy<br>& Rewards</div>
-            <div class="tile-emoji">🌸</div>
-        </a>
-        <a href="?page=Analytics" target="_self" class="tile-button">
-            <div class="tile-title">Beauty<br>stats</div>
-            <div class="tile-emoji">🐈‍⬛</div>
-        </a>
-    </div>
-    """, unsafe_allow_html=True)
+    # Row 1
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("""
+        <div class="custom-tile">
+            <div class="custom-tile-title">Your<br>Collection</div>
+            <div class="custom-tile-icon">🦇</div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown('<div class="overlay-button">', unsafe_allow_html=True)
+        if st.button("Your Collection", key="btn_coll"):
+            st.session_state.current_page = "Collection"
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div class="custom-tile">
+            <div class="custom-tile-title">Project<br>Pan</div>
+            <div class="custom-tile-icon">🌕</div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown('<div class="overlay-button">', unsafe_allow_html=True)
+        if st.button("Project Pan", key="btn_pan"):
+            st.session_state.current_page = "Project Pan"
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Row 2
+    col3, col4 = st.columns(2)
+    with col3:
+        st.markdown("""
+        <div class="custom-tile">
+            <div class="custom-tile-title">No - Buy<br>& Rewards</div>
+            <div class="custom-tile-icon">🌸</div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown('<div class="overlay-button">', unsafe_allow_html=True)
+        if st.button("No - Buy & Rewards", key="btn_nobuy"):
+            st.session_state.current_page = "No-Buy Rules"
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col4:
+        st.markdown("""
+        <div class="custom-tile">
+            <div class="custom-tile-title">Beauty<br>stats</div>
+            <div class="custom-tile-icon">🐈‍⬛</div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown('<div class="overlay-button">', unsafe_allow_html=True)
+        if st.button("Beauty stats", key="btn_stats"):
+            st.session_state.current_page = "Analytics"
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # Bottom Quote Frame
     st.markdown("""
@@ -271,7 +313,6 @@ if st.session_state.current_page == "Home":
 # ---------------------------------------------------------
 else:
     if st.button("← Back to Menu"):
-        st.query_params.clear()
         st.session_state.current_page = "Home"
         st.rerun()
 
