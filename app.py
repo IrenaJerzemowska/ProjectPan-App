@@ -66,20 +66,24 @@ st.markdown("""
         font-weight: 400;
     }
 
-    /* Stylizacja kafelków / przycisków w siatce 2x2 */
+    /* Wyliczenie prawidłowej wysokości kwadratów w siatce */
+    div[data-testid="column"] div[data-testid="element-container"] {
+        width: 100% !important;
+    }
+
     div[data-testid="column"] div[data-testid="stButton"] {
         width: 100% !important;
     }
 
-    div[data-testid="column"] div[data-testid="stButton"] > button {
-        background: #ffffff !important;
+    div[data-testid="column"] button[kind="secondary"] {
+        background-color: #ffffff !important;
         border: 1.5px solid #ffffff !important;
         border-radius: 2px !important;
         color: #4a4253 !important;
-        aspect-ratio: 1 / 1 !important;
         width: 100% !important;
-        height: auto !important;
+        height: 180px !important;
         min-height: 180px !important;
+        aspect-ratio: 1 / 1 !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
@@ -90,23 +94,24 @@ st.markdown("""
         margin: 0 !important;
     }
 
-    div[data-testid="column"] div[data-testid="stButton"] > button:hover {
+    div[data-testid="column"] button[kind="secondary"]:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 14px rgba(110, 90, 140, 0.1) !important;
     }
 
-    /* Styl tekstu wewnątrz przycisków */
-    div[data-testid="column"] div[data-testid="stButton"] > button p {
+    /* Wymuszenie zawijania linii i rozmiaru fontu wewnątrz przycisków */
+    div[data-testid="column"] button[kind="secondary"] p {
         font-family: 'Playfair Display', serif !important;
         font-size: 1.45rem !important;
         font-weight: 700 !important;
-        line-height: 1.25 !important;
+        line-height: 1.3 !important;
         white-space: pre-line !important;
         text-align: center !important;
         color: #4a4253 !important;
+        margin: 0 !important;
     }
 
-    /* Marginesy i odstępy kolumn */
+    /* Marginesy kolumn */
     div[data-testid="column"] {
         padding: 0 6px !important;
     }
@@ -116,10 +121,10 @@ st.markdown("""
         margin-bottom: 12px !important;
     }
 
-    /* Dolna karta z cytatem (z czarną ramką ze zdjęcia 1) */
+    /* Dolna karta z cytatem z wyraźną czarną ramką */
     .quote-card {
         background: #ffffff;
-        border: 2px solid #3a3342;
+        border: 2px solid #3a3342 !important;
         border-radius: 2px;
         padding: 2.5rem 1.5rem;
         text-align: center;
