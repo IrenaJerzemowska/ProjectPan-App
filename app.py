@@ -209,45 +209,57 @@ def estimate_pan_completion(category, capacity, unit, daily_uses):
     elif "lip balm" in cat:
         days_needed_base = 90   
     elif "lip mask" in cat:
-        days_needed_base = 225  
+        days_needed_base = 225 
     elif "foundation" in cat:
-        days_needed_base = 150  
+        days_needed_base = 150 
     elif "concealer" in cat:
-        days_needed_base = 225  
+        days_needed_base = 225 
     elif "powder" in cat:
-        days_needed_base = 300  
+        days_needed_base = 300 
     elif "setting spray" in cat:
-        days_needed_base = 120  
+        days_needed_base = 120 
     elif "contour" in cat:
-        days_needed_base = 300  
+        days_needed_base = 300 
     elif "cream blush" in cat or "blush" in cat and "cream" in cat:
-        days_needed_base = 365  
+        days_needed_base = 365 
     elif "powder blush" in cat or ("blush" in cat and "powder" in cat):
         days_needed_base = 1095 
     elif "cream highlighter" in cat:
-        days_needed_base = 540  
+        days_needed_base = 540 
     elif "powder highlighter" in cat or ("highlighter" in cat and "powder" in cat):
         days_needed_base = 1460 
     elif "eyeshadow palette" in cat:
         days_needed_base = 1095 
     elif "mascara" in cat:
-        days_needed_base = 120  
+        days_needed_base = 120 
     elif "eyeliner" in cat:
-        days_needed_base = 210  
+        days_needed_base = 210 
     elif "lip liner" in cat:
-        days_needed_base = 225  
+        days_needed_base = 225 
     elif "brow pen" in cat:
-        days_needed_base = 120  
+        days_needed_base = 120 
     elif "brow gel" in cat:
-        days_needed_base = 150  
+        days_needed_base = 150 
     else:
         days_needed_base = 250
 
     days_needed = int(days_needed_base / daily_uses)
-    total_applications_needed = days_needed_base  
+    total_applications_needed = days_needed_base 
     
     completion_date = datetime.date.today() + datetime.timedelta(days=max(days_needed, 1))
     return days_needed, completion_date, total_applications_needed
+
+def image_to_base64(uploaded_file):
+    if uploaded_file is not None:
+        try:
+            image = Image.open(uploaded_file)
+            image.thumbnail((400, 400))
+            buffered = io.BytesIO()
+            image.convert("RGB").save(buffered, format="JPEG", quality=85)
+            return base64.b64encode(buffered.getvalue()).decode()
+        except Exception:
+            return None
+    return None
 
 # ---------------------------------------------------------
 # Header Block
@@ -263,6 +275,7 @@ st.markdown("""
 # PAGE 1: HOME
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
+    
     col1, col2 = st.columns(2)
     with col1:
         if st.button("Your\nCollection\n\n🦇", key="btn_coll", use_container_width=True):
@@ -353,6 +366,8 @@ else:
                     with col_act:
                         if st.button("+ Log Use", key=f"quick_use_{p['id']}"):
                             p["total_uses"] = p.get("total_uses", 0) + 1
+                            if "stats" not in st.session_state.db:
+                                st.session_state.db["stats"] = {"xp": 0}
                             st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + 5
                             save_data(st.session_state.db)
                             st.rerun()
@@ -393,7 +408,7 @@ else:
                     """, unsafe_allow_html=True)
                     
                     with st.form(key=f"review_form_{p['id']}"):
-                        finish_rating = st.slider("Rating (Stars)", min_value=0, max_value=5, value=5, step=1)
+                        finish_rating = st.slider("Rating (Stars)", min_value=0, max_value=5, value=5, step=1, help="0 stars is the worst, 5 stars is the best!")
                         finish_review = st.text_area("Write a short review or thoughts:")
                         
                         rc1, rc2 = st.columns(2)
@@ -418,10 +433,15 @@ else:
                                 st.session_state.db["empties"] = []
                             st.session_state.db["empties"].append(empty_item)
                             
+                            if "stats" not in st.session_state.db:
+                                st.session_state.db["stats"] = {"xp": 0}
                             st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + 50
                             st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
                             st.session_state[finishing_id_key] = None
                             save_data(st.session_state.db)
+                            
+                            if is_lip and st.session_state.db["stats"]["finished_lip_products"] % 5 == 0:
+                                st.session_state["show_lip_reward_banner"] = True
                             st.rerun()
                             
                         if cancel_review:
@@ -648,6 +668,8 @@ else:
                     st.markdown("<br>", unsafe_allow_html=True)
                     if st.button("Log (+XP)", key=f"btn_{p['id']}"):
                         p["total_uses"] = p.get("total_uses", 0) + add_uses
+                        if "stats" not in st.session_state.db:
+                            st.session_state.db["stats"] = {"xp": 0}
                         st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + (add_uses * 5)
                         save_data(st.session_state.db)
                         st.rerun()
@@ -662,61 +684,7 @@ else:
                     if st.button("Delete Item 🗑️", key=f"pan_del_btn_{p['id']}"):
                         st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
                         save_data(st.session_state.db)
+                        st.success("Product deleted.")
                         st.rerun()
-
+                
                 st.markdown("</div>", unsafe_allow_html=True)
-
-    # --- WISHLIST ---
-    elif st.session_state.current_page == "Wishlist":
-        st.markdown("### Wishlist ✨")
-        wishlist = st.session_state.db.get("wishlist", [])
-        
-        with st.form("add_wishlist_form"):
-            w_brand = st.text_input("Brand")
-            w_item = st.text_input("Product Name / Shade")
-            w_price = st.number_input("Price", min_value=0.0, value=0.0)
-            submitted_w = st.form_submit_button("Add to Wishlist")
-            if submitted_w and w_brand:
-                wishlist.append({"id": str(random.randint(100000, 999999)), "brand": w_brand, "item": w_item, "price": w_price})
-                st.session_state.db["wishlist"] = wishlist
-                save_data(st.session_state.db)
-                st.rerun()
-
-        for w in wishlist:
-            st.markdown(f"""
-            <div class="vanity-card">
-                <h4 style="margin:0; font-family:'Playfair Display', serif;">{w['brand']} — {w['item']}</h4>
-                <p style="margin:5px 0 0 0; font-size:0.88rem;">Price: {w['price']:.2f}</p>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button("Remove", key=f"del_w_{w['id']}"):
-                st.session_state.db["wishlist"] = [item for item in wishlist if item["id"] != w["id"]]
-                save_data(st.session_state.db)
-                st.rerun()
-
-    # --- NO-BUY RULES ---
-    elif st.session_state.current_page == "No-Buy Rules":
-        st.markdown("### No-Buy Rules & Rewards 🌸")
-        st.markdown("""
-        <div class="vanity-card">
-            <p><strong>Rules:</strong><br>1. Shop your stash first.<br>2. Complete 5 lip products to unlock a reward item!</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        finished_lips = st.session_state.db.get("stats", {}).get("finished_lip_products", 0)
-        st.metric("Finished Lip Products", finished_lips, help="Every 5 unlocks a reward!")
-
-    # --- ANALYTICS ---
-    elif st.session_state.current_page == "Analytics":
-        st.markdown("### Beauty Stats 🐈‍⬛")
-        products = st.session_state.db.get("products", [])
-        empties = st.session_state.db.get("empties", [])
-        
-        total_items = len(products) + len(empties)
-        total_spent = sum([p.get("price", 0) for p in products] + [e.get("price", 0) for e in empties])
-        
-        col_a1, col_a2 = st.columns(2)
-        with col_a1:
-            st.metric("Total Owned Items", total_items)
-        with col_a2:
-            st.metric("Lifetime Spend", f"{total_spent:.2f}")
