@@ -1,11 +1,7 @@
 import streamlit as st
-import pandas as pd
-import datetime
-import os
-import json
 
 # ---------------------------------------------------------
-# Page Configuration & Navigation
+# Page Configuration
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="Vanity Sanctuary",
@@ -14,16 +10,11 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Odczyt strony z parametrów URL
-query_params = st.query_params
-if "page" in query_params:
-    st.session_state.current_page = query_params["page"]
-
 if "current_page" not in st.session_state:
     st.session_state.current_page = "Home"
 
 # ---------------------------------------------------------
-# Global Styles (Tło i Ramki)
+# Global Styles (Stylizujemy natywne st.button)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
@@ -67,6 +58,31 @@ st.markdown("""
         margin-bottom: 0;
     }
 
+    /* Wymuszamy na przyciskach wygląd kwadratowych kafelków */
+    div[data-testid="column"] button {
+        background-color: #ffffff !important;
+        border: 1px solid #e2d8ee !important;
+        border-radius: 4px !important;
+        height: 170px !important;
+        width: 100% !important;
+        box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06) !important;
+        white-space: pre-line !important;
+        font-family: 'Playfair Display', serif !important;
+        font-size: 1.25rem !important;
+        font-weight: 700 !important;
+        color: #554a60 !important;
+        line-height: 1.2 !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+    }
+
+    div[data-testid="column"] button:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 18px rgba(100, 80, 130, 0.12) !important;
+        border-color: #cbbba6 !important;
+        background-color: #ffffff !important;
+        color: #3a3342 !important;
+    }
+
     .quote-card {
         background: #ffffff;
         border: 2px solid #3a3342 !important;
@@ -97,101 +113,33 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# HOME PAGE (DUŻE KWADRATY + DZIAŁAJĄCE KLIKANIE)
+# HOME PAGE (100% DZIAŁAJĄCE PRZYCISKI STREAMLIT)
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
 
-    grid_html = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap');
+    # Rząd 1
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Your\nCollection\n\n🦇", key="btn_coll"):
+            st.session_state.current_page = "Collection"
+            st.rerun()
 
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: transparent;
-            font-family: 'Playfair Display', serif;
-        }
+    with col2:
+        if st.button("Project\nPan\n\n🌕", key="btn_pan"):
+            st.session_state.current_page = "Project Pan"
+            st.rerun()
 
-        .grid-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            width: 100%;
-        }
+    # Rząd 2
+    col3, col4 = st.columns(2)
+    with col3:
+        if st.button("No - Buy\n& Rewards\n\n🌸", key="btn_nobuy"):
+            st.session_state.current_page = "No-Buy Rules"
+            st.rerun()
 
-        .tile-card {
-            background-color: #ffffff;
-            border: 1px solid #e2d8ee;
-            border-radius: 4px;
-            height: 175px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            padding: 22px 10px 18px 10px;
-            box-sizing: border-box;
-            box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06);
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .tile-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 18px rgba(100, 80, 130, 0.12);
-            border-color: #cbbba6;
-        }
-
-        .tile-title {
-            font-size: 1.35rem;
-            font-weight: 700;
-            color: #554a60;
-            line-height: 1.2;
-            text-align: center;
-            margin: 0;
-        }
-
-        .tile-emoji {
-            font-size: 3.8rem;
-            line-height: 1;
-            margin-bottom: 2px;
-        }
-    </style>
-    <script>
-        function goToPage(pageName) {
-            window.top.location.href = window.top.location.pathname + '?page=' + encodeURIComponent(pageName);
-        }
-    </script>
-    </head>
-    <body>
-
-    <div class="grid-container">
-        <div class="tile-card" onclick="goToPage('Collection')">
-            <div class="tile-title">Your<br>Collection</div>
-            <div class="tile-emoji">🦇</div>
-        </div>
-        <div class="tile-card" onclick="goToPage('Project Pan')">
-            <div class="tile-title">Project<br>Pan</div>
-            <div class="tile-emoji">🌕</div>
-        </div>
-        <div class="tile-card" onclick="goToPage('No-Buy Rules')">
-            <div class="tile-title">No - Buy<br>& Rewards</div>
-            <div class="tile-emoji">🌸</div>
-        </div>
-        <div class="tile-card" onclick="goToPage('Analytics')">
-            <div class="tile-title">Beauty<br>stats</div>
-            <div class="tile-emoji">🐈‍⬛</div>
-        </div>
-    </div>
-
-    </body>
-    </html>
-    """
-
-    st.components.v1.html(grid_html, height=380)
+    with col4:
+        if st.button("Beauty\nstats\n\n🐈‍⬛", key="btn_stats"):
+            st.session_state.current_page = "Analytics"
+            st.rerun()
 
     st.markdown("""
     <div class="quote-card">
@@ -205,7 +153,6 @@ if st.session_state.current_page == "Home":
 else:
     if st.button("← Back to Menu"):
         st.session_state.current_page = "Home"
-        st.query_params.clear()
         st.rerun()
 
     st.markdown("---")
