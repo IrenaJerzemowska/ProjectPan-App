@@ -773,6 +773,7 @@ else:
                         st.rerun()
 
     # --- NO-BUY RULES & REWARDS ---
+    # --- NO-BUY RULES & REWARDS ---
     elif st.session_state.current_page == "No-Buy Rules":
         st.markdown("### No-Buy & Rewards 🌸")
         
@@ -783,6 +784,44 @@ else:
                 <p style="margin:0; font-size:0.95rem; color: #6b3b52;">You've finished 5 lip products! Treat yourself to a guilt-free luxury coffee or small beauty treat!</p>
             </div>
             """, unsafe_allow_html=True)
+            if st.button("Claim & Dismiss Reward"):
+                st.session_state["show_lip_reward_banner"] = False
+                st.rerun()
+
+        stats = st.session_state.db.get("stats", {})
+        start_date_str = stats.get("no_buy_start_date", str(datetime.date.today()))
+        try:
+            current_start_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        except Exception:
+            current_start_date = datetime.date.today()
+
+        # Allow user to choose/update the date interactively
+        st.markdown("<p style='font-size:0.9rem; color:#5c5366;'>Select your no-buy start date below:</p>", unsafe_allow_html=True)
+        selected_start_date = st.date_input("No-Buy Start Date", value=current_start_date, key="no_buy_date_picker")
+
+        if str(selected_start_date) != start_date_str:
+            st.session_state.db["stats"]["no_buy_start_date"] = str(selected_start_date)
+            save_data(st.session_state.db)
+            st.rerun()
+
+        no_buy_days = max((datetime.date.today() - selected_start_date).days, 0)
+        finished_lips = stats.get("finished_lip_products", 0)
+
+        st.markdown(f"""
+        <div class="vanity-card" style="text-align: center;">
+            <h4 style="margin:0; font-family:'Playfair Display', serif; color:#4a3468;">No-Buy Track Record</h4>
+            <p style="font-size: 2rem; font-family:'Playfair Display', serif; color: #6b4c8c; margin: 10px 0 5px 0;">{no_buy_days} Days</p>
+            <p style="margin:0; font-size: 0.85rem; color:#8c7aa9;">Started on {selected_start_date.strftime('%B %d, %Y')}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div class="vanity-card" style="text-align: center;">
+            <h4 style="margin:0; font-family:'Playfair Display', serif; color:#4a3468;">Lip Product Milestone</h4>
+            <p style="font-size: 2rem; font-family:'Playfair Display', serif; color: #6b4c8c; margin: 10px 0 5px 0;">{finished_lips} / 5</p>
+            <p style="margin:0; font-size: 0.85rem; color:#8c7aa9;">Finished lip items toward your next reward voucher.</p>
+        </div>
+        """, unsafe_allow_html=True)
             if st.button("Claim & Dismiss Reward"):
                 st.session_state["show_lip_reward_banner"] = False
                 st.rerun()
