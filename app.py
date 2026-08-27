@@ -264,11 +264,6 @@ st.markdown("""
 # PAGE 1: HOME (Pure HTML Symmetrical Square Grid)
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
-
-    # Obsługa kliknięć za pomocą query params / st.button w formie natywnej ukrytej lub prostych przycisków Streamlit sterowanych stanem
-    # Zamiast zwykłych linków HTML, użyjemy małych kolumn ze Streamlita, ale wymusimy flex w kontenerze rodzica za pomocą klucza, 
-    # lub zrobimy to poprzez Streamlitowe przyciski w małych kontenerach. 
-    # Poniżej rozwiązanie w 100% bezpieczne dla Streamlita:
     
     col1, col2 = st.columns(2)
     with col1:
@@ -332,6 +327,7 @@ else:
                 days = calculate_days_owned(p["purchase_date"])
                 cpu = calculate_cost_per_use(p["price"], p.get("total_uses", 0))
                 is_pan = p.get("in_project_pan", False)
+                edit_mode_key = f"edit_mode_{p['id']}"
 
                 st.markdown(f"""
                 <div class="vanity-card">
@@ -353,7 +349,10 @@ else:
 
                 st.markdown("</div>", unsafe_allow_html=True)
 
-                c1, c2 = st.columns(2)
+                if edit_mode_key not in st.session_state:
+                    st.session_state[edit_mode_key] = False
+
+                c1, c2, c3 = st.columns(3)
                 with c1:
                     btn_label = "Remove from Pan" if is_pan else "Add to Project Pan ✨"
                     if st.button(btn_label, key=f"pan_{p['id']}"):
@@ -361,12 +360,71 @@ else:
                         save_data(st.session_state.db)
                         st.rerun()
                 with c2:
+                    if st.button("Edit Product ✏️", key=f"edit_toggle_{p['id']}"):
+                        st.session_state[edit_mode_key] = not st.session_state[edit_mode_key]
+                        st.rerun()
+                with c3:
                     if st.button("Mark as Finished 🎉", key=f"fin_{p['id']}"):
                         if p["category"].lower() in LIP_CATEGORIES:
                             st.session_state.db["stats"]["finished_lip_products"] = st.session_state.db["stats"].get("finished_lip_products", 0) + 1
                         st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
                         save_data(st.session_state.db)
                         st.rerun()
+
+                if st.session_state[edit_mode_key]:
+                    with st.form(key=f"edit_form_{p['id']}"):
+                        st.markdown(f"**Edit details for {p['brand']} - {p['name']}**")
+                        new_name = st.text_input("Product Name", value=p["name"])
+                        new_brand = st.text_input("Brand", value=p["brand"])
+                        new_shade = st.text_input("Shade", value=p["shade"] if p["shade"] != "N/A" else "")
+                        
+                        try:
+                            cat_index = CATEGORIES.index(p["category"].lower())
+                        except ValueError:
+                            cat_index = 0
+                        new_category = st.selectbox("Category", CATEGORIES, index=cat_index)
+
+                        ec1, ec2 = st.columns(2)
+                        with ec1:
+                            new_price = st.number_input("Price", min_value=0.0, value=float(p["price"]))
+                            try:
+                                curr_index = ["GBP", "PLN", "EUR", "USD"].index(p["currency"])
+                            except ValueError:
+                                curr_index = 0
+                            new_currency = st.selectbox("Currency", ["GBP", "PLN", "EUR", "USD"], index=curr_index)
+                            
+                            try:
+                                parsed_date = datetime.datetime.strptime(p["purchase_date"], "%Y-%m-%d").date()
+                            except Exception:
+                                parsed_date = datetime.date.today()
+                            new_purchase_date = st.date_input("Purchase Date", value=parsed_date)
+                        with ec2:
+                            new_capacity = st.number_input("Capacity", min_value=0.0, value=float(p.get("capacity", 10.0)))
+                            try:
+                                unit_index = ["ml", "g", "items"].index(p.get("unit", "ml"))
+                            except ValueError:
+                                unit_index = 0
+                            new_unit = st.selectbox("Unit", ["ml", "g", "items"], index=unit_index)
+                            new_uses = st.number_input("Total Uses", min_value=0, value=int(p.get("total_uses", 0)))
+
+                        if st.form_submit_button("Save Changes ✓"):
+                            p["name"] = new_name
+                            p["brand"] = new_brand
+                            p["shade"] = new_shade if new_shade else "N/A"
+                            p["category"] = new_category
+                            p["price"] = float(new_price)
+                            p["currency"] = new_currency
+                            p["purchase_date"] = str(new_purchase_date)
+                            p["capacity"] = float(new_capacity)
+                            p["unit"] = new_unit
+                            p["total_uses"] = int(new_uses)
+                            
+                            save_data(st.session_state.db)
+                            st.session_state[edit_mode_key] = False
+                            st.success("Product updated successfully!")
+                            st.rerun()
+
+                st.markdown("<br>", unsafe_allow_html=True)
 
     # --- PROJECT PAN ---
     elif st.session_state.current_page == "Project Pan":
