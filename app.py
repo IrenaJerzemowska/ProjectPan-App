@@ -17,6 +17,11 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Obsługa nawigacji przez parametry URL (gwarantuje idealny wygląd HTML/CSS)
+query_params = st.query_params
+if "page" in query_params:
+    st.session_state.current_page = query_params["page"]
+
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
@@ -28,10 +33,10 @@ st.markdown("""
         font-family: 'Lora', serif;
     }
 
-    /* Dopasowanie szerokości głównego kontenera */
+    /* Szerokość głównego kontenera */
     .block-container {
-        max-width: 480px !important;
-        padding-top: 2rem !important;
+        max-width: 460px !important;
+        padding-top: 1.5rem !important;
         padding-bottom: 2rem !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
@@ -58,7 +63,7 @@ st.markdown("""
 
     .sanctuary-header p {
         color: #b5a4c9;
-        font-size: 1.3rem;
+        font-size: 1.25rem;
         font-family: 'Lora', serif;
         font-style: italic;
         margin-top: 0.4rem;
@@ -66,81 +71,69 @@ st.markdown("""
         font-weight: 400;
     }
 
-    /* Wyliczenie prawidłowej wysokości kwadratów w siatce */
-    div[data-testid="column"] div[data-testid="element-container"] {
-        width: 100% !important;
+    /* SIATKA KAFELKÓW NAWIGACYJNYCH (IDEALNE KWADRATY) */
+    .grid-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 16px;
     }
 
-    div[data-testid="column"] div[data-testid="stButton"] {
-        width: 100% !important;
+    .tile-button {
+        background-color: #ffffff;
+        border-radius: 2px;
+        aspect-ratio: 1 / 1;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none !important;
+        box-shadow: 0 3px 10px rgba(130, 110, 160, 0.05);
+        transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        box-sizing: border-box;
+        padding: 1rem;
     }
 
-    div[data-testid="column"] button[kind="secondary"] {
-        background-color: #ffffff !important;
-        border: 1.5px solid #ffffff !important;
-        border-radius: 2px !important;
-        color: #4a4253 !important;
-        width: 100% !important;
-        height: 180px !important;
-        min-height: 180px !important;
-        aspect-ratio: 1 / 1 !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        box-shadow: 0 3px 10px rgba(130, 110, 160, 0.05) !important;
-        transition: transform 0.15s ease-in-out !important;
-        padding: 1rem !important;
-        margin: 0 !important;
-    }
-
-    div[data-testid="column"] button[kind="secondary"]:hover {
+    .tile-button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 14px rgba(110, 90, 140, 0.1) !important;
+        box-shadow: 0 6px 14px rgba(110, 90, 140, 0.12);
     }
 
-    /* Wymuszenie zawijania linii i rozmiaru fontu wewnątrz przycisków */
-    div[data-testid="column"] button[kind="secondary"] p {
-        font-family: 'Playfair Display', serif !important;
-        font-size: 1.45rem !important;
-        font-weight: 700 !important;
-        line-height: 1.3 !important;
-        white-space: pre-line !important;
-        text-align: center !important;
-        color: #4a4253 !important;
-        margin: 0 !important;
+    .tile-title {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.45rem;
+        font-weight: 700;
+        color: #4a4253;
+        text-align: center;
+        line-height: 1.2;
+        margin-bottom: 0.8rem;
     }
 
-    /* Marginesy kolumn */
-    div[data-testid="column"] {
-        padding: 0 6px !important;
-    }
-    
-    div[data-testid="stHorizontalBlock"] {
-        gap: 0px !important;
-        margin-bottom: 12px !important;
+    .tile-emoji {
+        font-size: 1.6rem;
+        line-height: 1;
     }
 
-    /* Dolna karta z cytatem z wyraźną czarną ramką */
+    /* Dolna karta z cytatem */
     .quote-card {
         background: #ffffff;
-        border: 2px solid #3a3342 !important;
+        border: 2px solid #3a3342;
         border-radius: 2px;
-        padding: 2.5rem 1.5rem;
+        padding: 2.2rem 1.5rem;
         text-align: center;
-        margin-top: 16px;
     }
 
     .quote-card p {
         font-family: 'Lora', serif;
         color: #5c5366;
-        font-size: 1.4rem;
+        font-size: 1.35rem;
         margin: 0;
         line-height: 1.4;
         letter-spacing: 0.2px;
     }
 
-    /* Inner Cards */
+    /* Karty na podstronach */
     .vanity-card {
         background: #ffffff;
         border-radius: 4px;
@@ -170,7 +163,6 @@ st.markdown("""
         margin-top: 2px;
     }
 
-    /* Inputs Fix */
     div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
         border-color: #cbbad9 !important;
@@ -242,33 +234,30 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# PAGE 1: HOME (Symmetrical Square Grid)
+# PAGE 1: HOME (Kwadratowa Siatka HTML/CSS)
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
 
-    # Row 1
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Your\nCollection\n\n🦇", key="btn_coll"):
-            st.session_state.current_page = "Collection"
-            st.rerun()
-
-    with col2:
-        if st.button("Project\nPan\n\n🌕", key="btn_pan"):
-            st.session_state.current_page = "Project Pan"
-            st.rerun()
-
-    # Row 2
-    col3, col4 = st.columns(2)
-    with col3:
-        if st.button("No - Buy\n& Rewards\n\n🌸", key="btn_nobuy"):
-            st.session_state.current_page = "No-Buy Rules"
-            st.rerun()
-
-    with col4:
-        if st.button("Beauty\nstats\n\n🐈‍⬛", key="btn_stats"):
-            st.session_state.current_page = "Analytics"
-            st.rerun()
+    st.markdown("""
+    <div class="grid-container">
+        <a href="?page=Collection" target="_self" class="tile-button">
+            <div class="tile-title">Your<br>Collection</div>
+            <div class="tile-emoji">🦇</div>
+        </a>
+        <a href="?page=Project+Pan" target="_self" class="tile-button">
+            <div class="tile-title">Project<br>Pan</div>
+            <div class="tile-emoji">🌕</div>
+        </a>
+        <a href="?page=No-Buy+Rules" target="_self" class="tile-button">
+            <div class="tile-title">No - Buy<br>& Rewards</div>
+            <div class="tile-emoji">🌸</div>
+        </a>
+        <a href="?page=Analytics" target="_self" class="tile-button">
+            <div class="tile-title">Beauty<br>stats</div>
+            <div class="tile-emoji">🐈‍⬛</div>
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Bottom Quote Frame
     st.markdown("""
@@ -282,6 +271,7 @@ if st.session_state.current_page == "Home":
 # ---------------------------------------------------------
 else:
     if st.button("← Back to Menu"):
+        st.query_params.clear()
         st.session_state.current_page = "Home"
         st.rerun()
 
