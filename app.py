@@ -1,4 +1,4 @@
- import streamlit as st
+import streamlit as st
 import pandas as pd
 import datetime
 import os
@@ -696,3 +696,17 @@ else:
                 st.info("No brand information found in your products.")
         else:
             st.info("Add some products to your collection to see your brand distribution chart.")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Category Breakdown Chart Integration
+        st.markdown("#### 📊 Category Distribution")
+        if products:
+            df_cats = pd.DataFrame(products)
+            if "category" in df_cats.columns and not df_cats.empty:
+                cat_counts = df_cats["category"].value_counts()
+                st.bar_chart(cat_counts)
+            else:
+                st.info("No category information found.")
+        else:
+            st.info("Add products to view category breakdowns.")
