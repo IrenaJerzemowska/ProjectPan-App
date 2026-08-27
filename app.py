@@ -28,28 +28,28 @@ st.markdown("""
         font-family: 'Lora', serif;
     }
 
-    /* Container Constrain */
+    /* Mobile-First Strict Container Constrain */
     .block-container {
-        max-width: 480px !important;
-        padding-top: 1.5rem !important;
-        padding-bottom: 2rem !important;
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
+        max-width: 100% !important;
+        padding-top: 1rem !important;
+        padding-bottom: 3rem !important;
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
     }
 
     /* Header Styling */
     .sanctuary-header {
         background: #ffffff;
         border-radius: 6px;
-        padding: 1.8rem 1rem 1.4rem 1rem;
+        padding: 1.5rem 1rem 1.2rem 1rem;
         text-align: center;
-        margin-bottom: 16px;
+        margin-bottom: 12px;
         box-shadow: 0 4px 15px rgba(120, 100, 150, 0.04);
     }
 
     .sanctuary-header h1 {
         font-family: 'Playfair Display', serif !important;
-        font-size: 2.2rem !important;
+        font-size: 1.9rem !important;
         color: #3a3342 !important;
         margin: 0 !important;
         font-weight: 700 !important;
@@ -58,38 +58,36 @@ st.markdown("""
 
     .sanctuary-header p {
         color: #b5a4c9;
-        font-size: 1.15rem;
+        font-size: 1.05rem;
         font-family: 'Playfair Display', serif;
         font-style: italic;
-        margin-top: 0.3rem;
+        margin-top: 0.2rem;
         margin-bottom: 0;
         font-weight: 400;
     }
 
-    /* Coherent Grid Tile Buttons */
+    /* Coherent Grid Tile Buttons - Mobile Optimized */
     div[data-testid="column"] .stButton > button {
         background: #ffffff !important;
         border: 1px solid #e2d8ee !important;
         border-radius: 6px !important;
         color: #554a60 !important;
         font-family: 'Playfair Display', serif !important;
-        font-size: 1.25rem !important;
+        font-size: 1.1rem !important;
         font-weight: 700 !important;
-        height: 160px !important;
+        height: 130px !important;
         width: 100% !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
         box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06) !important;
-        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-        padding: 0.5rem !important;
+        padding: 0.3rem !important;
         margin: 0 !important;
+        white-space: pre-wrap !important;
     }
 
     div[data-testid="column"] .stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 18px rgba(100, 80, 130, 0.12) !important;
         border-color: #cbbad9 !important;
         background-color: #ffffff !important;
         color: #3a3342 !important;
@@ -97,21 +95,25 @@ st.markdown("""
 
     div[data-testid="column"] .stButton > button p {
         font-family: 'Playfair Display', serif !important;
-        font-size: 1.25rem !important;
+        font-size: 1.1rem !important;
         font-weight: 700 !important;
-        line-height: 1.25 !important;
+        line-height: 1.2 !important;
         margin: 0 !important;
-        white-space: pre-wrap !important;
         text-align: center !important;
     }
 
-    div[data-testid="column"] {
-        padding: 0 6px !important;
-    }
-    
+    /* Fix columns wrapping on mobile */
     div[data-testid="stHorizontalBlock"] {
-        gap: 0px !important;
-        margin-bottom: 12px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 8px !important;
+        margin-bottom: 8px !important;
+    }
+
+    div[data-testid="column"] {
+        flex: 1 !important;
+        min-width: 0 !important;
+        padding: 0 !important;
     }
 
     /* Bottom Quote Card */
@@ -119,7 +121,7 @@ st.markdown("""
         background: #ffffff;
         border: 1px solid #e2d8ee;
         border-radius: 6px;
-        padding: 2.2rem 1rem;
+        padding: 1.5rem 1rem;
         text-align: center;
         margin-top: 12px;
         box-shadow: 0 4px 12px rgba(100, 80, 130, 0.04);
@@ -128,10 +130,9 @@ st.markdown("""
     .quote-card p {
         font-family: 'Lora', serif;
         color: #5c5366;
-        font-size: 1.25rem;
+        font-size: 1.1rem;
         margin: 0;
-        line-height: 1.45;
-        letter-spacing: 0.2px;
+        line-height: 1.4;
     }
 
     /* Inner Cards - Coherent Radius & Style */
@@ -139,29 +140,29 @@ st.markdown("""
         background: #ffffff;
         border-radius: 6px;
         border: 1px solid #e9e2f4;
-        padding: 1.2rem;
-        margin-bottom: 1rem;
+        padding: 1rem;
+        margin-bottom: 0.8rem;
         box-shadow: 0 3px 10px rgba(130, 110, 160, 0.04);
     }
 
     .metric-box {
         background: #f7f3fd;
         border: 1px solid #dcd0f0;
-        padding: 0.8rem;
+        padding: 0.6rem;
         border-radius: 6px;
         text-align: center;
     }
     .metric-box .metric-value {
-        font-size: 1.3rem;
+        font-size: 1.1rem;
         font-weight: 600;
         color: #4a3468;
         font-family: 'Playfair Display', serif;
     }
     .metric-box .metric-label {
-        font-size: 0.65rem;
+        font-size: 0.6rem;
         color: #8c7aa9;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
         margin-top: 2px;
     }
 
@@ -219,15 +220,6 @@ def calculate_cost_per_use(price, total_uses):
     return price if total_uses <= 0 else price / total_uses
 
 def estimate_pan_completion(category, capacity, unit, daily_uses):
-    """
-    Szacowanie czasu zużycia na podstawie pojemności i średniego zużycia na 1 aplikację (w ml lub g).
-    Standardowe zużycie produktu na 1 użycie (w ml/g):
-    - Foundation/Setting spray: ~0.5 - 1.0 ml
-    - Concealer: ~0.1 - 0.2 ml
-    - Lipstick/Lip gloss: ~0.03 - 0.05 ml
-    - Mascara: ~0.05 ml
-    - Powder/Blush/Highlighter: ~0.05 - 0.1 g
-    """
     if daily_uses <= 0 or capacity <= 0:
         return None, None
         
@@ -243,9 +235,8 @@ def estimate_pan_completion(category, capacity, unit, daily_uses):
     elif "powder" in cat or "blush" in cat or "contour" in cat or "highlighter" in cat:
         ml_per_use = 0.08
     else:
-        ml_per_use = 0.1  # domyślnie
+        ml_per_use = 0.1
 
-    # całkowita liczba aplikacji do wykończenia pojemności
     total_applications_needed = capacity / ml_per_use
     days_needed = int(total_applications_needed / daily_uses)
     
@@ -348,7 +339,6 @@ else:
                     <p style="margin:0; font-size:0.9rem;"><strong>Price:</strong> {p['price']:.2f} {p['currency']} | <strong>Age:</strong> {days} days | <strong>Uses:</strong> {p.get('total_uses', 0)} | <strong>CPU:</strong> {cpu:.2f} {p['currency']}</p>
                 """, unsafe_allow_html=True)
 
-                # Szybkie logowanie użycia bezpośrednio w kolekcji, jeśli produkt jest w Project Pan
                 if is_pan:
                     st.markdown("<hr style='margin: 10px 0; border-color: #eee0f8;'>", unsafe_allow_html=True)
                     col_info, col_act = st.columns([2, 1])
@@ -403,7 +393,6 @@ else:
                 with m3:
                     st.markdown(f'<div class="metric-box"><div class="metric-value">{cpu:.2f} {p["currency"]}</div><div class="metric-label">Cost / Use</div></div>', unsafe_allow_html=True)
 
-                # Kalkulator przewidywanego czasu zużycia
                 st.markdown("<br>", unsafe_allow_html=True)
                 daily_uses_input = st.number_input("Estimated daily applications:", min_value=0.5, max_value=10.0, value=1.0, step=0.5, key=f"d_uses_{p['id']}")
                 
@@ -505,5 +494,3 @@ else:
                     st.rerun()
                 else:
                     st.error("Please fill in Name and Brand.")
-     
-
