@@ -128,7 +128,8 @@ st.markdown("""
 DATA_FILE = "vanity_data.json"
 
 CATEGORIES = [
-    "foundation", "concealer", "powder", "contour", "blush", 
+    "foundation", "concealer", "powder", "powder contour", "cream contour", 
+    "liquid contour", "powder blush", "cream blush", "liquid blush", 
     "highlighter", "eyeshadow palette", "lip gloss", "lipstick", 
     "eyeliner", "mascara", "lip liner", "lip mask", "lip balm",
     "setting spray", "brow gel", "brow pen"
@@ -194,8 +195,12 @@ def estimate_pan_completion(category, daily_uses):
     elif "concealer" in cat: days_needed_base = 225 
     elif "powder" in cat: days_needed_base = 300 
     elif "setting spray" in cat: days_needed_base = 120 
-    elif "contour" in cat: days_needed_base = 300 
-    elif "blush" in cat: days_needed_base = 365 
+    elif "powder contour" in cat or "contour" in cat: days_needed_base = 300 
+    elif "cream contour" in cat: days_needed_base = 240 
+    elif "liquid contour" in cat: days_needed_base = 200 
+    elif "powder blush" in cat or "blush" in cat: days_needed_base = 365 
+    elif "cream blush" in cat: days_needed_base = 270 
+    elif "liquid blush" in cat: days_needed_base = 210 
     elif "highlighter" in cat: days_needed_base = 540 
     elif "eyeshadow palette" in cat: days_needed_base = 1095 
     elif "mascara" in cat: days_needed_base = 120 
@@ -655,7 +660,4 @@ else:
         with col1:
             st.markdown(f'<div class="metric-box"><div class="metric-value">{total_items}</div><div class="metric-label">Active Items</div></div>', unsafe_allow_html=True)
         with col2:
-            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_empties}</div><div class="metric-label">Empties (Graveyard)</div></div>', unsafe_allow_html=True)
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown(f'<div class="metric-box"><div class="metric-value">{total_spent:.2f}</div><div class="metric-label">Total Value of Active Inventory</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_empties}</div><div class="metric-label">Empties Logged</div></div>', unsafe_allow_html=True)
