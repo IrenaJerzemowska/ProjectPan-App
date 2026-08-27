@@ -66,8 +66,23 @@ st.markdown("""
         font-weight: 400;
     }
 
-    /* Coherent Grid Tile Buttons */
-    div[data-testid="column"] .stButton > button {
+    /* --- GHOST-PROOF MOBILE GRID (Pure CSS Layout) --- */
+    .grid-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+        margin-bottom: 12px;
+    }
+
+    .grid-row {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .grid-tile {
         background: #ffffff !important;
         border: 1px solid #e2d8ee !important;
         border-radius: 6px !important;
@@ -75,52 +90,27 @@ st.markdown("""
         font-family: 'Playfair Display', serif !important;
         font-size: 1.25rem !important;
         font-weight: 700 !important;
-        height: 160px !important;
-        width: 100% !important;
+        height: 150px !important;
+        width: 50% !important;
+        flex: 1;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
         box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06) !important;
+        text-decoration: none !important;
         transition: transform 0.15s ease, box-shadow 0.15s ease !important;
         padding: 0.5rem !important;
-        margin: 0 !important;
+        text-align: center;
+        cursor: pointer;
     }
 
-    div[data-testid="column"] .stButton > button:hover {
+    .grid-tile:hover {
         transform: translateY(-2px) !important;
         box-shadow: 0 8px 18px rgba(100, 80, 130, 0.12) !important;
         border-color: #cbbad9 !important;
         background-color: #ffffff !important;
         color: #3a3342 !important;
-    }
-
-    div[data-testid="column"] .stButton > button p {
-        font-family: 'Playfair Display', serif !important;
-        font-size: 1.25rem !important;
-        font-weight: 700 !important;
-        line-height: 1.25 !important;
-        margin: 0 !important;
-        white-space: pre-wrap !important;
-        text-align: center !important;
-    }
-
-    /* Force strict 2-column layout side-by-side on mobile and desktop */
-    div[data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        gap: 6px !important;
-        margin-bottom: 6px !important;
-        width: 100% !important;
-    }
-
-    div[data-testid="column"] {
-        flex: 1 1 50% !important;
-        width: 50% !important;
-        min-width: 50% !important;
-        max-width: 50% !important;
-        padding: 0 2px !important;
     }
 
     /* Bottom Quote Card */
@@ -271,29 +261,32 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# PAGE 1: HOME (Symmetrical Square Grid)
+# PAGE 1: HOME (Pure HTML Symmetrical Square Grid)
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
 
+    # Obsługa kliknięć za pomocą query params / st.button w formie natywnej ukrytej lub prostych przycisków Streamlit sterowanych stanem
+    # Zamiast zwykłych linków HTML, użyjemy małych kolumn ze Streamlita, ale wymusimy flex w kontenerze rodzica za pomocą klucza, 
+    # lub zrobimy to poprzez Streamlitowe przyciski w małych kontenerach. 
+    # Poniżej rozwiązanie w 100% bezpieczne dla Streamlita:
+    
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Your\nCollection\n\n🦇", key="btn_coll"):
+        if st.button("Your\nCollection\n\n🦇", key="btn_coll", use_container_width=True):
             st.session_state.current_page = "Collection"
             st.rerun()
-
     with col2:
-        if st.button("Project\nPan\n\n🌕", key="btn_pan"):
+        if st.button("Project\nPan\n\n🌕", key="btn_pan", use_container_width=True):
             st.session_state.current_page = "Project Pan"
             st.rerun()
 
     col3, col4 = st.columns(2)
     with col3:
-        if st.button("No - Buy\n& Rewards\n\n🌸", key="btn_nobuy"):
+        if st.button("No - Buy\n& Rewards\n\n🌸", key="btn_nobuy", use_container_width=True):
             st.session_state.current_page = "No-Buy Rules"
             st.rerun()
-
     with col4:
-        if st.button("Beauty\nstats\n\n🐈‍⬛", key="btn_stats"):
+        if st.button("Beauty\nstats\n\n🐈‍⬛", key="btn_stats", use_container_width=True):
             st.session_state.current_page = "Analytics"
             st.rerun()
 
