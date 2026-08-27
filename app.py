@@ -315,6 +315,11 @@ else:
                             p["total_uses"] = p.get("total_uses", 0) + 1
                             if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
                             st.session_state.db["stats"]["xp"] = max(st.session_state.db["stats"].get("xp", 0) + 5, 0)
+                            
+                            # Move product to the end of the products list so it becomes last (or top depending on view order)
+                            st.session_state.db["products"].remove(p)
+                            st.session_state.db["products"].append(p)
+
                             save_data(st.session_state.db)
                             st.rerun()
 
@@ -536,6 +541,11 @@ else:
                         if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
                         current_xp = st.session_state.db["stats"].get("xp", 0)
                         st.session_state.db["stats"]["xp"] = max(current_xp + 5, 0)
+                        
+                        # Move product to the end of the products list so it jumps to the top when rendered reversed/sorted
+                        st.session_state.db["products"].remove(p)
+                        st.session_state.db["products"].append(p)
+
                         save_data(st.session_state.db)
                         st.rerun()
 
