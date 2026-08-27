@@ -21,14 +21,14 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
 
-    /* Tło całej aplikacji */
+    /* Background Theme */
     .stApp {
         background-color: #d8cde9 !important;
         color: #382a4b;
         font-family: 'Lora', serif;
     }
 
-    /* Szerokość kontenera jak na zdjęciu */
+    /* Container Width */
     .main .block-container {
         max-width: 440px !important;
         padding-top: 1.5rem !important;
@@ -37,7 +37,7 @@ st.markdown("""
         padding-right: 1rem !important;
     }
 
-    /* Nagłówek aplikacji */
+    /* Header */
     .sanctuary-header {
         background: #ffffff;
         border-radius: 4px;
@@ -66,7 +66,7 @@ st.markdown("""
         font-weight: 400;
     }
 
-    /* TYLKO DLA STRONY GŁÓWNEJ - Stylizacja idealnych kwadratów */
+    /* Layout Spacing */
     div[data-testid="stHorizontalBlock"] {
         gap: 14px !important;
         margin-bottom: 14px !important;
@@ -76,7 +76,7 @@ st.markdown("""
         position: relative !important;
     }
 
-    /* Wizualna karta kwadratowa w tle */
+    /* Square Tiles */
     .custom-tile {
         background-color: #ffffff;
         border: 1px solid #e2d8ee;
@@ -86,8 +86,9 @@ st.markdown("""
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: space-between;
-        padding: 1.5rem 0.8rem 1.2rem 0.8rem;
+        justify-content: center; /* Centered content vertically */
+        gap: 1rem; /* Balanced space between title & emoji */
+        padding: 1.2rem;
         box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06);
         box-sizing: border-box;
     }
@@ -102,13 +103,29 @@ st.markdown("""
         margin: 0;
     }
 
-    .custom-tile-icon {
-        font-size: 2.8rem;
-        line-height: 1;
-        margin-bottom: 0.2rem;
+    /* Floating Animation for Whimsical Feel */
+    @keyframes floatEmoji {
+        0% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-4px) rotate(3deg); }
+        100% { transform: translateY(0px) rotate(0deg); }
     }
 
-    /* Przezroczysty przycisk Streamlit nałożony na całą kartę */
+    .custom-tile-icon {
+        font-size: 3.5rem; /* Larger emoji size */
+        line-height: 1;
+        margin: 0;
+        display: inline-block;
+        animation: floatEmoji 3.5s ease-in-out infinite;
+        filter: drop-shadow(0px 2px 4px rgba(100, 80, 130, 0.15));
+    }
+
+    /* Staggered animation timings for each emoji */
+    .icon-bat { animation-delay: 0s; }
+    .icon-moon { animation-delay: 0.8s; }
+    .icon-flower { animation-delay: 1.6s; }
+    .icon-cat { animation-delay: 2.4s; }
+
+    /* Overlay Click Handler */
     .overlay-button > button {
         position: absolute !important;
         top: 0 !important;
@@ -120,7 +137,7 @@ st.markdown("""
         cursor: pointer !important;
     }
 
-    /* Dolna karta z cytatem i czarną ramką */
+    /* Quote Banner */
     .quote-card {
         background: #ffffff;
         border: 2px solid #3a3342 !important;
@@ -139,7 +156,7 @@ st.markdown("""
         letter-spacing: 0.2px;
     }
 
-    /* Inner Cards */
+    /* Inner Pages */
     .vanity-card {
         background: #ffffff;
         border-radius: 4px;
@@ -169,7 +186,6 @@ st.markdown("""
         margin-top: 2px;
     }
 
-    /* Form Fields */
     div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {
         background-color: #ffffff !important;
         border-color: #cbbad9 !important;
@@ -231,7 +247,7 @@ def image_to_base64(uploaded_file):
     return None
 
 # ---------------------------------------------------------
-# Header Block
+# Header
 # ---------------------------------------------------------
 st.markdown("""
 <div class="sanctuary-header">
@@ -241,7 +257,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# PAGE 1: HOME (Symmetrical Pixel-Perfect Grid)
+# PAGE 1: HOME
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
 
@@ -251,7 +267,7 @@ if st.session_state.current_page == "Home":
         st.markdown("""
         <div class="custom-tile">
             <div class="custom-tile-title">Your<br>Collection</div>
-            <div class="custom-tile-icon">🦇</div>
+            <div class="custom-tile-icon icon-bat">🦇</div>
         </div>
         """, unsafe_allow_html=True)
         st.markdown('<div class="overlay-button">', unsafe_allow_html=True)
@@ -264,7 +280,7 @@ if st.session_state.current_page == "Home":
         st.markdown("""
         <div class="custom-tile">
             <div class="custom-tile-title">Project<br>Pan</div>
-            <div class="custom-tile-icon">🌕</div>
+            <div class="custom-tile-icon icon-moon">🌕</div>
         </div>
         """, unsafe_allow_html=True)
         st.markdown('<div class="overlay-button">', unsafe_allow_html=True)
@@ -279,7 +295,7 @@ if st.session_state.current_page == "Home":
         st.markdown("""
         <div class="custom-tile">
             <div class="custom-tile-title">No - Buy<br>& Rewards</div>
-            <div class="custom-tile-icon">🌸</div>
+            <div class="custom-tile-icon icon-flower">🌸</div>
         </div>
         """, unsafe_allow_html=True)
         st.markdown('<div class="overlay-button">', unsafe_allow_html=True)
@@ -292,7 +308,7 @@ if st.session_state.current_page == "Home":
         st.markdown("""
         <div class="custom-tile">
             <div class="custom-tile-title">Beauty<br>stats</div>
-            <div class="custom-tile-icon">🐈‍⬛</div>
+            <div class="custom-tile-icon icon-cat">🐈‍⬛</div>
         </div>
         """, unsafe_allow_html=True)
         st.markdown('<div class="overlay-button">', unsafe_allow_html=True)
