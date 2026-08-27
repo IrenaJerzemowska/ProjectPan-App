@@ -1,4 +1,4 @@
-import streamlit as st
+ import streamlit as st
 import pandas as pd
 import datetime
 import os
@@ -657,288 +657,42 @@ else:
                             st.session_state[pan_finishing_key] = None
                             st.rerun()
 
-                st.markdown("</div>", unsafe_allow_html=True)
-
-    # --- WISHLIST ---
-    elif st.session_state.current_page == "Wishlist":
-        st.markdown("### Wishlist ✨")
-        
-        if st.session_state.get("show_lip_reward_banner", False):
-            wishlist_pool = st.session_state.db.get("wishlist", [])
-            if wishlist_pool:
-                reward_pick = random.choice(wishlist_pool)
-                st.markdown(f"""
-                <div style="background-color: #f4ecfb; border: 1px solid #d4c2ec; border-radius: 6px; padding: 1.2rem; margin-bottom: 1.2rem;">
-                    <h4 style="margin:0 0 0.3rem 0; font-family:'Playfair Display', serif; color:#4a3468;">🎉 Lip Milestone Unlocked!</h4>
-                    <p style="margin:0; font-size:0.95rem; color:#5c5366;">You've finished 5 lip products! Time to reward yourself with that <b>{reward_pick['brand']} - {reward_pick['item']}</b> you've been eyeing on your wishlist.</p>
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown("""
-                <div style="background-color: #f4ecfb; border: 1px solid #d4c2ec; border-radius: 6px; padding: 1.2rem; margin-bottom: 1.2rem;">
-                    <h4 style="margin:0 0 0.3rem 0; font-family:'Playfair Display', serif; color:#4a3468;">🎉 Lip Milestone Unlocked!</h4>
-                    <p style="margin:0; font-size:0.95rem; color:#5c5366;">You've finished 5 lip products! Add items to your wishlist to receive automated reward suggestions.</p>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            if st.button("Dismiss Reward Notice"):
-                st.session_state["show_lip_reward_banner"] = False
-                st.rerun()
-
-        with st.form("wishlist_form", clear_on_submit=True):
-            w_brand = st.text_input("Brand *")
-            w_item = st.text_input("Product Name / Shade *")
-            w_cat = st.selectbox("Category", CATEGORIES, key="w_cat")
-            
-            wc1, wc2 = st.columns(2)
-            with wc1:
-                w_price = st.number_input("Estimated Price", min_value=0.0, value=15.0)
-                w_est_uses = st.number_input("Estimated Total Uses", min_value=1, value=50)
-            with wc2:
-                w_curr = st.selectbox("Currency", ["GBP", "PLN", "EUR", "USD"], key="w_curr")
-                
-            if st.form_submit_button("Add to Wishlist 💭"):
-                if w_brand and w_item:
-                    existing_products = st.session_state.db.get("products", [])
-                    dupe_matches = [p for p in existing_products if p["brand"].lower() == w_brand.lower() and p["category"].lower() == w_cat.lower()]
-                    
-                    wishlist_item = {
-                        "id": str(datetime.datetime.now().timestamp()),
-                        "brand": w_brand,
-                        "item": w_item,
-                        "category": w_cat,
-                        "price": float(w_price),
-                        "currency": w_curr,
-                        "estimated_uses": int(w_est_uses)
-                    }
-                    if "wishlist" not in st.session_state.db:
-                        st.session_state.db["wishlist"] = []
-                    st.session_state.db["wishlist"].append(wishlist_item)
-                    save_data(st.session_state.db)
-                    
-                    if dupe_matches:
-                        st.warning(f"Note: You already own items from **{w_brand}** in the **{w_cat}** category. Check your collection to avoid duplicate shades!")
-                    else:
-                        st.success(f"Added {w_brand} - {w_item} to wishlist!")
-                    st.rerun()
-                else:
-                    st.error("Please fill in Brand and Product Name.")
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        wishlist_items = st.session_state.db.get("wishlist", [])
-
-        if not wishlist_items:
-            st.info("Your wishlist is currently empty.")
-        else:
-            for w in reversed(wishlist_items):
-                est_uses = w.get("estimated_uses", 50)
-                projected_cpu = w["price"] / est_uses if est_uses > 0 else w["price"]
-
-                st.markdown(f"""
-                <div class="vanity-card">
-                    <h4 style="margin:0 0 0.3rem 0; font-family:'Playfair Display', serif;">{w['brand']} — {w['item']}</h4>
-                    <p style="margin:0 0 0.4rem 0; color:#8c7aa9; font-size:0.88rem;">Category: {w['category']} | <b>{w['price']:.2f} {w['currency']}</b></p>
-                    <p style="margin:0; font-size:0.84rem; color:#6b5b7a;">🔮 Projected Cost-Per-Use: <b>{projected_cpu:.2f} {w['currency']}</b> (based on ~{est_uses} uses)</p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                col_w1, col_w2 = st.columns(2)
-                with col_w1:
-                    if st.button("Move to Collection 🛒", key=f"move_{w['id']}"):
-                        new_product = {
-                            "id": str(datetime.datetime.now().timestamp()),
-                            "brand": w["brand"],
-                            "shade": w["item"],
-                            "category": w["category"],
-                            "price": w["price"],
-                            "currency": w["currency"],
-                            "purchase_date": str(datetime.date.today()),
-                            "capacity": 10.0,
-                            "unit": "ml",
-                            "total_uses": 0,
-                            "in_project_pan": False,
-                            "image_b64": None
-                        }
-                        st.session_state.db["products"].append(new_product)
-                        st.session_state.db["wishlist"] = [item for item in st.session_state.db["wishlist"] if item["id"] != w["id"]]
-                        st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + 10
-                        save_data(st.session_state.db)
-                        st.success("Moved item to your collection!")
-                        st.rerun()
-                with col_w2:
-                    if st.button("Delete 🗑️", key=f"del_w_{w['id']}"):
-                        st.session_state.db["wishlist"] = [item for item in st.session_state.db["wishlist"] if item["id"] != w["id"]]
-                        save_data(st.session_state.db)
-                        st.rerun()
                 st.markdown("<br>", unsafe_allow_html=True)
 
-    # --- NO-BUY RULES ---
-    elif st.session_state.current_page == "No-Buy Rules":
-        st.markdown("### No - Buy & Rewards")
-        stats = st.session_state.db.get("stats", {})
-
-        start_date_str = stats.get("no_buy_start_date", str(datetime.date.today()))
-        try:
-            start_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d").date()
-            streak_days = max((datetime.date.today() - start_date).days, 0)
-        except Exception:
-            streak_days = 0
-
-        st.markdown("#### No-Buy Streak Tracker")
-        sc1, sc2 = st.columns(2)
-        with sc1:
-            st.markdown(f'<div class="metric-box"><div class="metric-value">{streak_days}</div><div class="metric-label">Days Streak</div></div>', unsafe_allow_html=True)
-        with sc2:
-            new_start = st.date_input("Reset Streak Date", value=start_date if 'start_date' in locals() else datetime.date.today())
-            if st.button("Update Start Date"):
-                st.session_state.db["stats"]["no_buy_start_date"] = str(new_start)
-                save_data(st.session_state.db)
-                st.rerun()
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        if st.button("🚨 Oops, I Bought Something (Reset Streak & -50 XP)"):
-            st.session_state.db["stats"]["no_buy_start_date"] = str(datetime.date.today())
-            current_xp = st.session_state.db["stats"].get("xp", 0)
-            st.session_state.db["stats"]["xp"] = max(current_xp - 50, 0)
-            save_data(st.session_state.db)
-            st.warning("No-buy streak reset to 0 days, and 50 XP penalty applied. Dust yourself off and start fresh!")
-            st.rerun()
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        fin_lips = stats.get("finished_lip_products", 0)
-        earned_tokens = fin_lips // 5
-        lips_needed = 5 - (fin_lips % 5)
-
-        st.markdown("#### 5-Out = 1-In Rule (Lip Products)")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.markdown(f'<div class="metric-box"><div class="metric-value">{fin_lips}</div><div class="metric-label">Finished</div></div>', unsafe_allow_html=True)
-        with col2:
-            st.markdown(f'<div class="metric-box"><div class="metric-value">{earned_tokens}</div><div class="metric-label">Allowed</div></div>', unsafe_allow_html=True)
-        with col3:
-            st.markdown(f'<div class="metric-box"><div class="metric-value">{lips_needed}</div><div class="metric-label">To Next</div></div>', unsafe_allow_html=True)
-
-    # --- BEAUTY STATS ---
+    # --- BEAUTY STATS / ANALYTICS ---
     elif st.session_state.current_page == "Analytics":
-        st.markdown("### Beauty Stats")
+        st.markdown("### Beauty Stats 🐈‍⬛")
+        st.markdown("<p style='color:#8c7aa9; font-size:0.9rem;'>Insights and overview of your beauty sanctuary.</p>", unsafe_allow_html=True)
+        
         products = st.session_state.db.get("products", [])
         empties = st.session_state.db.get("empties", [])
-
-        if not products and not empties:
-            st.info("No data available.")
+        
+        total_items = len(products)
+        total_empties = len(empties)
+        total_spent = sum([p.get("price", 0.0) for p in products])
+        
+        col_s1, col_s2, col_s3 = st.columns(3)
+        with col_s1:
+            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_items}</div><div class="metric-label">Active Items</div></div>', unsafe_allow_html=True)
+        with col_s2:
+            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_empties}</div><div class="metric-label">Empties</div></div>', unsafe_allow_html=True)
+        with col_s3:
+            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_spent:.1f}</div><div class="metric-label">Total Value</div></div>', unsafe_allow_html=True)
+            
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Most Loved Brands Chart Integration
+        st.markdown("#### 💖 Most Loved Brands")
+        if products:
+            df_products = pd.DataFrame(products)
+            if "brand" in df_products.columns and not df_products.empty:
+                brand_counts = df_products["brand"].value_counts().head(10)
+                st.bar_chart(brand_counts)
+                
+                top_brand = brand_counts.index[0]
+                top_count = brand_counts.iloc[0]
+                st.success(f"Your most collected brand is **{top_brand}** with **{top_count}** products!")
+            else:
+                st.info("No brand information found in your products.")
         else:
-            total_items = len(products)
-            
-            currency_totals = {}
-            for p in products:
-                curr = p.get("currency", "GBP")
-                currency_totals[curr] = currency_totals.get(curr, 0.0) + p.get("price", 0.0)
-
-            most_used = max(products, key=lambda x: x.get("total_uses", 0)) if products else None
-
-            st.markdown("#### Overview Metrics")
-            m_col1, m_col2 = st.columns(2)
-            with m_col1:
-                st.markdown(f'<div class="metric-box"><div class="metric-value">{total_items}</div><div class="metric-label">Active Items</div></div>', unsafe_allow_html=True)
-            with m_col2:
-                spent_str = " | ".join([f"{amt:.2f} {curr}" for curr, amt in currency_totals.items()]) if currency_totals else "0.00"
-                st.markdown(f'<div class="metric-box"><div class="metric-value" style="font-size:1.1rem;">{spent_str}</div><div class="metric-label">Total Spent</div></div>', unsafe_allow_html=True)
-
-            st.markdown("<br>", unsafe_allow_html=True)
-
-            if empties:
-                st.markdown("#### Empties & Reviews Insights 🪦")
-                
-                total_empties = len(empties)
-                rated_empties = [e for e in empties if "rating" in e]
-                avg_rating = sum([e["rating"] for e in rated_empties]) / len(rated_empties) if rated_empties else 0.0
-                
-                best_empty = max(empties, key=lambda x: x.get("rating", 0), default=None)
-                worst_empty = min(empties, key=lambda x: x.get("rating", 5), default=None)
-                
-                s_col1, s_col2 = st.columns(2)
-                with s_col1:
-                    st.markdown(f'<div class="metric-box"><div class="metric-value">{total_empties}</div><div class="metric-label">Total Emptied</div></div>', unsafe_allow_html=True)
-                with s_col2:
-                    st.markdown(f'<div class="metric-box"><div class="metric-value">{avg_rating:.1f} / 5 ⭐</div><div class="metric-label">Average Grade</div></div>', unsafe_allow_html=True)
-                
-                st.markdown("<br>", unsafe_allow_html=True)
-                
-                if best_empty:
-                    st.markdown(f"""
-                    <div class="vanity-card">
-                        <p style="margin:0 0 0.2rem 0; font-size:0.75rem; text-transform:uppercase; color:#8c7aa9; letter-spacing:1px;">Highest Graded Empty</p>
-                        <h5 style="margin:0; font-family:'Playfair Display', serif;">{best_empty['brand']} — {best_empty['shade']} ({best_empty.get('rating', 0)} ⭐)</h5>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                if worst_empty and worst_empty != best_empty:
-                    st.markdown(f"""
-                    <div class="vanity-card">
-                        <p style="margin:0 0 0.2rem 0; font-size:0.75rem; text-transform:uppercase; color:#8c7aa9; letter-spacing:1px;">Lowest Graded Empty</p>
-                        <h5 style="margin:0; font-family:'Playfair Display', serif;">{worst_empty['brand']} — {worst_empty['shade']} ({worst_empty.get('rating', 0)} ⭐)</h5>
-                    </div>
-                    """, unsafe_allow_html=True)
-                
-                st.markdown("<br>", unsafe_allow_html=True)
-
-            if most_used and most_used.get("total_uses", 0) > 0:
-                st.markdown("#### Most Used Product Overall")
-                st.markdown(f"""
-                <div class="vanity-card">
-                    <h5 style="margin:0; font-family:'Playfair Display', serif;">{most_used['brand']} — {most_used['shade']}</h5>
-                    <p style="margin:4px 0 0 0; color:#635770; font-size:0.88rem;">Category: {most_used['category']} | <b>{most_used.get('total_uses', 0)} total uses</b></p>
-                </div>
-                """, unsafe_allow_html=True)
-
-            if products:
-                st.markdown("#### Oldest Products in Collection")
-                sorted_by_age = sorted(products, key=lambda x: calculate_days_owned(x["purchase_date"]), reverse=True)[:3]
-                for p in sorted_by_age:
-                    days = calculate_days_owned(p["purchase_date"])
-                    st.markdown(f"""
-                    <div class="vanity-card">
-                        <h5 style="margin:0; font-family:'Playfair Display', serif;">{p['brand']} — {p['shade']}</h5>
-                        <p style="margin:4px 0 0 0; color:#635770; font-size:0.85rem;">Owned for {days} days</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-    # --- ADD PRODUCT ---
-    elif st.session_state.current_page == "Add Product":
-        st.markdown("### Add Product")
-        with st.form("add_form", clear_on_submit=True):
-            brand = st.text_input("Brand *")
-            shade = st.text_input("Shade / Variant (e.g. 280 Mauve Quartz)")
-            category = st.selectbox("Category *", CATEGORIES)
-            
-            c1, c2 = st.columns(2)
-            with c1:
-                price = st.number_input("Price *", min_value=0.0, value=15.0)
-                currency = st.selectbox("Currency *", ["GBP", "PLN", "EUR", "USD"])
-                purchase_date = st.date_input("Purchase Date *", datetime.date.today())
-            with c2:
-                capacity = st.number_input("Capacity", min_value=0.0, value=4.0)
-                unit = st.selectbox("Unit", ["g", "ml", "items"])
-
-            in_pan = st.checkbox("Add to Project Pan immediately", value=True)
-            uploaded_img = st.file_uploader("Upload Image", type=["jpg", "jpeg", "png"])
-
-            if st.form_submit_button("Save to Collection ✨"):
-                if brand:
-                    img_b64 = image_to_base64(uploaded_img) if uploaded_img else None
-                    new_item = {
-                        "id": str(datetime.datetime.now().timestamp()),
-                        "brand": brand, "shade": shade if shade else "N/A",
-                        "category": category, "price": float(price), "currency": currency,
-                        "purchase_date": str(purchase_date), "capacity": float(capacity),
-                        "unit": unit, "total_uses": 0, "in_project_pan": in_pan, "image_b64": img_b64
-                    }
-                    st.session_state.db["products"].append(new_item)
-                    st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + 10
-                    save_data(st.session_state.db)
-                    st.success(f"Added {brand} - {shade}")
-                    st.session_state.current_page = "Collection"
-                    st.rerun()
-                else:
-                    st.error("Please fill in Brand.")
+            st.info("Add some products to your collection to see your brand distribution chart.")
