@@ -6,9 +6,10 @@ import json
 import base64
 from PIL import Image
 import io
+from collections import Counter
 
 # ---------------------------------------------------------
-# Page Configuration & Cute Gothic Violet Theme Styling
+# Page Configuration & Gothic Theme
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="Project Pan — Gothic Vanity",
@@ -17,7 +18,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for Gothic Violet Aesthetics
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
@@ -48,13 +48,6 @@ st.markdown("""
         font-size: 2.2rem !important;
         margin: 0 !important;
         text-shadow: 0 0 10px rgba(192, 132, 252, 0.5);
-    }
-
-    .gothic-header p {
-        color: #a855f7;
-        font-style: italic;
-        margin-top: 0.5rem;
-        font-size: 0.95rem;
     }
 
     [data-testid="stSidebar"] {
@@ -124,14 +117,16 @@ CATEGORIES = [
     "setting spray", "brow gel", "brow pen"
 ]
 
+LIP_CATEGORIES = ["lip gloss", "lipstick", "lip liner", "lip mask"]
+
 def load_data():
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
-            return {"products": []}
-    return {"products": []}
+            return {"products": [], "settings": {}, "stats": {"finished_lip_products": 0, "penalties": 0}}
+    return {"products": [], "settings": {}, "stats": {"finished_lip_products": 0, "penalties": 0}}
 
 def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
@@ -140,40 +135,24 @@ def save_data(data):
 if "db" not in st.session_state:
     st.session_state.db = load_data()
 
+if "settings" not in st.session_state.db:
+    st.session_state.db["settings"] = {}
+if "stats" not in st.session_state.db:
+    st.session_state.db["stats"] = {"finished_lip_products": 0, "penalties": 0}
+
 # ---------------------------------------------------------
-# Helper Calculations
+# Helper Functions
 # ---------------------------------------------------------
 def calculate_days_owned(purchase_date_str):
     try:
         p_date = datetime.datetime.strptime(purchase_date_str, "%Y-%m-%d").date()
         today = datetime.date.today()
-        days = (today - p_date).days
-        return max(days, 0)
+        return max((today - p_date).days, 0)
     except Exception:
         return 0
 
 def calculate_cost_per_use(price, total_uses):
-    if total_uses <= 0:
-        return price
-    return price / total_uses
-
-def calculate_pan_projection(capacity, daily_uses, unit):
-    if daily_uses <= 0:
-        return "N/A"
-    
-    estimated_use_per_application = 0.08 if unit in ["ml", "g"] else 1
-    total_est_applications = capacity / estimated_use_per_application if capacity > 0 else 200
-    
-    days_to_finish = total_est_applications / daily_uses
-    months = days_to_finish / 30.4
-    
-    if months < 1:
-        return f"~{int(days_to_finish)} days"
-    elif months < 12:
-        return f"~{round(months, 1)} months"
-    else:
-        years = months / 12
-        return f"~{round(years, 1)} years"
+    return price if total_uses <= 0 else price / total_uses
 
 def image_to_base64(uploaded_file):
     if uploaded_file is not None:
@@ -185,19 +164,19 @@ def image_to_base64(uploaded_file):
     return None
 
 # ---------------------------------------------------------
-# Header Banner & Sidebar Navigation
+# Header & Navigation
 # ---------------------------------------------------------
 st.markdown("""
 <div class="gothic-header">
     <h1>🔮 Gothic Vanity & Project Pan 🔮</h1>
-    <p>Track your beauty treasures, log uses, and finish your potions.</p>
+    <p>5 Finished Lippies = 1 New Allowed. Respect the Rule or Face Penalties!</p>
 </div>
 """, unsafe_allow_html=True)
 
 st.sidebar.markdown("<h2 style='text-align:center;'>🕸️ Sanctuary 🕸️</h2>", unsafe_allow_html=True)
 nav = st.sidebar.radio(
     "Navigation", 
-    ["✨ Full Collection", "🧪 Project Pan Sanctuary", "➕ Add New Potion"]
+    ["✨ Full Collection", "🧪 Project Pan Sanctuary", "🕯️ No-Buy & Penalties", "📊 Gothic Analytics", "➕ Add New Potion"]
 )
 
 # ---------------------------------------------------------
@@ -208,12 +187,10 @@ if nav == "✨ Full Collection":
     products = st.session_state.db.get("products", [])
 
     if not products:
-        st.info("Your vanity is empty. Click on '➕ Add New Potion' in the sidebar!")
+        st.info("Your vanity is empty. Click on '➕ Add New Potion' to add cosmetics!")
     else:
         filter_cat = st.selectbox("Filter Category:", ["All Categories"] + CATEGORIES)
-        filtered_products = products
-        if filter_cat != "All Categories":
-            filtered_products = [p for p in filtered_products if p["category"].lower() == filter_cat.lower()]
+        filtered_products = [p for p in products if filter_cat == "All Categories" or p["category"].lower() == filter_cat.lower()]
 
         st.markdown(f"**Showing `{len(filtered_products)}` potion(s)**")
 
@@ -245,22 +222,24 @@ if nav == "✨ Full Collection":
                 **Age:** `{days}` days owned  
                 **Total Uses:** `{p.get('total_uses', 0)}`  
                 **Cost per Use:** `{cpu:.2f} {p['currency']}`  
-                **Size:** `{p.get('capacity', 'N/A')} {p.get('unit', '')}`
                 """, unsafe_allow_html=True)
 
-            is_pan = p.get("in_project_pan", False)
-            btn_label = "Remove from Pan" if is_pan else "Add to Project Pan 🧪"
-            
             c1, c2 = st.columns(2)
             with c1:
-                if st.button(btn_label, key=f"pan_toggle_{p['id']}"):
+                is_pan = p.get("in_project_pan", False)
+                btn_label = "Remove from Pan" if is_pan else "Add to Project Pan 🧪"
+                if st.button(btn_label, key=f"pan_{p['id']}"):
                     p["in_project_pan"] = not is_pan
                     save_data(st.session_state.db)
                     st.rerun()
             with c2:
-                if st.button("🗑️ Delete Potion", key=f"del_{p['id']}"):
+                if st.button("🏆 Mark as FINISHED (Panned!)", key=f"fin_{p['id']}"):
+                    if p["category"].lower() in LIP_CATEGORIES:
+                        st.session_state.db["stats"]["finished_lip_products"] = st.session_state.db["stats"].get("finished_lip_products", 0) + 1
                     st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
                     save_data(st.session_state.db)
+                    st.balloons()
+                    st.success(f"Finished {p['name']}! Great job!")
                     st.rerun()
 
             st.markdown("</div>", unsafe_allow_html=True)
@@ -273,14 +252,12 @@ elif nav == "🧪 Project Pan Sanctuary":
     products = [p for p in st.session_state.db.get("products", []) if p.get("in_project_pan", False)]
 
     if not products:
-        st.info("No items in Project Pan! Go to '✨ Full Collection' to select products to pan.")
+        st.info("No items in Project Pan! Select products from '✨ Full Collection'.")
     else:
         for p in products:
             days = calculate_days_owned(p["purchase_date"])
             total_uses = p.get("total_uses", 0)
             cpu = calculate_cost_per_use(p["price"], total_uses)
-            daily_uses = p.get("daily_uses", 1.0)
-            projection = calculate_pan_projection(p.get("capacity", 0), daily_uses, p.get("unit", "g"))
 
             st.markdown(f"""
             <div class="vanity-card">
@@ -295,9 +272,6 @@ elif nav == "🧪 Project Pan Sanctuary":
             with m3:
                 st.markdown(f'<div class="metric-box"><div class="metric-value">{cpu:.2f} {p["currency"]}</div><div class="metric-label">Cost / Use</div></div>', unsafe_allow_html=True)
 
-            st.markdown(f"⏳ **Est. Time to Finish:** `{projection}` (at `{daily_uses}` uses/day)")
-
-            st.markdown("#### 📝 Log Today's Usage")
             col_add, col_btn = st.columns([2, 1])
             with col_add:
                 add_uses = st.number_input("Add uses today:", min_value=1, max_value=10, value=1, key=f"uses_{p['id']}")
@@ -312,10 +286,78 @@ elif nav == "🧪 Project Pan Sanctuary":
             st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# TAB 3: ADD NEW POTION
+# TAB 3: NO-BUY & PENALTY SYSTEM
+# ---------------------------------------------------------
+elif nav == "🕯️ No-Buy & Penalties":
+    st.markdown("### 🕯️ Beauty No-Buy & Rules Tracker")
+    settings = st.session_state.db.get("settings", {})
+    stats = st.session_state.db.get("stats", {})
+
+    # 5 OUT = 1 IN RULE
+    fin_lips = stats.get("finished_lip_products", 0)
+    earned_tokens = fin_lips // 5
+    lips_needed = 5 - (fin_lips % 5)
+
+    st.markdown("#### 💄 The 5-to-1 Lippies Rule")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(f'<div class="metric-box"><div class="metric-value">{fin_lips}</div><div class="metric-label">Total Lippies Finished</div></div>', unsafe_allow_html=True)
+    with col2:
+        st.markdown(f'<div class="metric-box"><div class="metric-value">{earned_tokens}</div><div class="metric-label">New Lip Credits Earned 🎟️</div></div>', unsafe_allow_html=True)
+    with col3:
+        st.markdown(f'<div class="metric-box"><div class="metric-value">{lips_needed}</div><div class="metric-label">Lippies to Next Credit</div></div>', unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # PENALTIES SECTION
+    st.markdown("#### 💀 Penalty & Sin Counter")
+    penalties = stats.get("penalties", 0)
+    
+    p1, p2 = st.columns(2)
+    with p1:
+        st.markdown(f'<div class="metric-box" style="border-color:#b91c1c;"><div class="metric-value" style="color:#ef4444;">{penalties}</div><div class="metric-label">Penalty Points (Sins) 🩸</div></div>', unsafe_allow_html=True)
+    with p2:
+        status_text = "✨ Pure Angel" if penalties == 0 else "🖤 Vanity Sinner"
+        st.markdown(f'<div class="metric-box"><div class="metric-value">{status_text}</div><div class="metric-label">Current Vanity Status</div></div>', unsafe_allow_html=True)
+
+    if penalties > 0:
+        st.error(f"⚠️ You have {penalties} penalty points! Ban on new purchases extended!")
+
+# ---------------------------------------------------------
+# TAB 4: GOTHIC ANALYTICS
+# ---------------------------------------------------------
+elif nav == "📊 Gothic Analytics":
+    st.markdown("### 🕸️ Vanity Analytics & Smart Suggestions")
+    products = st.session_state.db.get("products", [])
+
+    if not products:
+        st.info("No products available.")
+    else:
+        st.markdown("#### 🦇 Priority: Use Me First! (Oldest Products)")
+        sorted_by_age = sorted(products, key=lambda x: calculate_days_owned(x["purchase_date"]), reverse=True)[:4]
+        
+        cols = st.columns(len(sorted_by_age))
+        for idx, p in enumerate(sorted_by_age):
+            days = calculate_days_owned(p["purchase_date"])
+            with cols[idx]:
+                st.markdown(f"""
+                <div class="vanity-card" style="border-color:#e11d48;">
+                    <span class="gothic-badge" style="background:#881337;">#{idx+1} OLDEST</span>
+                    <h4 style="margin:5px 0;">{p['brand']}</h4>
+                    <p style="font-size:0.85rem; margin:0;">{p['name']}</p>
+                    <p style="color:#fda4af; font-weight:bold; font-size:0.9rem;">{days} days old!</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+# ---------------------------------------------------------
+# TAB 5: ADD NEW POTION (WITH PENALTY CHECK)
 # ---------------------------------------------------------
 elif nav == "➕ Add New Potion":
     st.markdown("### 🔮 Add a New Potion")
+    stats = st.session_state.db.get("stats", {})
+    fin_lips = stats.get("finished_lip_products", 0)
+    earned_tokens = fin_lips // 5
+
     with st.form("add_form", clear_on_submit=True):
         name = st.text_input("Product Name *")
         brand = st.text_input("Brand *")
@@ -337,6 +379,14 @@ elif nav == "➕ Add New Potion":
 
         if st.form_submit_button("✨ Add to Vanity"):
             if name and brand:
+                # Check penalty rule for lip products
+                if category.lower() in LIP_CATEGORIES:
+                    if earned_tokens > 0:
+                        st.warning("You used 1 New Lip Credit to buy this product!")
+                    else:
+                        st.session_state.db["stats"]["penalties"] = st.session_state.db["stats"].get("penalties", 0) + 1
+                        st.error("🚨 PENALTY APPLIED! You bought a lip product without finishing 5 first! 1 Penalty Point added!")
+
                 img_b64 = image_to_base64(uploaded_img) if uploaded_img else None
                 new_item = {
                     "id": str(datetime.datetime.now().timestamp()),
