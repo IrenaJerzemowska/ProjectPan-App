@@ -21,35 +21,35 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
 
-    /* Clean Solid Lilac Background */
+    /* Tło całej aplikacji */
     .stApp {
         background-color: #d8cde9 !important;
         color: #382a4b;
         font-family: 'Lora', serif;
     }
 
-    /* Container Constrain to Match Image Aspect Ratio */
+    /* Dopasowanie szerokości głównego kontenera */
     .block-container {
         max-width: 480px !important;
-        padding-top: 1.5rem !important;
+        padding-top: 2rem !important;
         padding-bottom: 2rem !important;
         padding-left: 1rem !important;
         padding-right: 1rem !important;
     }
 
-    /* Header Styling */
+    /* Nagłówek aplikacji */
     .sanctuary-header {
         background: #ffffff;
         border-radius: 2px;
-        padding: 1.8rem 1rem 1.4rem 1rem;
+        padding: 2.2rem 1rem 1.8rem 1rem;
         text-align: center;
-        margin-bottom: 12px;
+        margin-bottom: 16px;
         box-shadow: 0 4px 15px rgba(120, 100, 150, 0.04);
     }
 
     .sanctuary-header h1 {
         font-family: 'Playfair Display', serif !important;
-        font-size: 2.2rem !important;
+        font-size: 2.5rem !important;
         color: #3a3342 !important;
         margin: 0 !important;
         font-weight: 700 !important;
@@ -58,69 +58,80 @@ st.markdown("""
 
     .sanctuary-header p {
         color: #b5a4c9;
-        font-size: 1.15rem;
-        font-family: 'Playfair Display', serif;
+        font-size: 1.3rem;
+        font-family: 'Lora', serif;
         font-style: italic;
-        margin-top: 0.3rem;
+        margin-top: 0.4rem;
         margin-bottom: 0;
         font-weight: 400;
     }
 
-    /* Perfect Square Grid Tile Buttons */
-    div[data-testid="column"] .stButton > button {
+    /* Stylizacja kafelków / przycisków w siatce 2x2 */
+    div[data-testid="column"] div[data-testid="stButton"] {
+        width: 100% !important;
+    }
+
+    div[data-testid="column"] div[data-testid="stButton"] > button {
         background: #ffffff !important;
         border: 1.5px solid #ffffff !important;
         border-radius: 2px !important;
         color: #4a4253 !important;
-        font-family: 'Playfair Display', serif !important;
-        font-size: 1.25rem !important;
-        font-weight: 700 !important;
         aspect-ratio: 1 / 1 !important;
-        height: auto !important;
         width: 100% !important;
+        height: auto !important;
+        min-height: 180px !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
         box-shadow: 0 3px 10px rgba(130, 110, 160, 0.05) !important;
         transition: transform 0.15s ease-in-out !important;
-        white-space: pre-wrap !important;
-        line-height: 1.25 !important;
-        padding: 0.5rem !important;
+        padding: 1rem !important;
         margin: 0 !important;
     }
 
-    div[data-testid="column"] .stButton > button:hover {
+    div[data-testid="column"] div[data-testid="stButton"] > button:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 14px rgba(110, 90, 140, 0.1) !important;
     }
 
-    /* Column spacing override for tight grid */
+    /* Styl tekstu wewnątrz przycisków */
+    div[data-testid="column"] div[data-testid="stButton"] > button p {
+        font-family: 'Playfair Display', serif !important;
+        font-size: 1.45rem !important;
+        font-weight: 700 !important;
+        line-height: 1.25 !important;
+        white-space: pre-line !important;
+        text-align: center !important;
+        color: #4a4253 !important;
+    }
+
+    /* Marginesy i odstępy kolumn */
     div[data-testid="column"] {
-        padding: 0 4px !important;
+        padding: 0 6px !important;
     }
     
     div[data-testid="stHorizontalBlock"] {
         gap: 0px !important;
-        margin-bottom: 8px !important;
+        margin-bottom: 12px !important;
     }
 
-    /* Bottom Quote Card */
+    /* Dolna karta z cytatem (z czarną ramką ze zdjęcia 1) */
     .quote-card {
         background: #ffffff;
-        border: 1.5px solid #4a4253;
+        border: 2px solid #3a3342;
         border-radius: 2px;
-        padding: 2.2rem 1rem;
+        padding: 2.5rem 1.5rem;
         text-align: center;
-        margin-top: 12px;
+        margin-top: 16px;
     }
 
     .quote-card p {
         font-family: 'Lora', serif;
         color: #5c5366;
-        font-size: 1.25rem;
+        font-size: 1.4rem;
         margin: 0;
-        line-height: 1.45;
+        line-height: 1.4;
         letter-spacing: 0.2px;
     }
 
