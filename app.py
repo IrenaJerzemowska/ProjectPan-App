@@ -188,7 +188,7 @@ def estimate_pan_completion(category, daily_uses):
     if "lipstick" in cat: days_needed_base = 730 
     elif "liquid lipstick" in cat: days_needed_base = 270 
     elif "lip gloss" in cat: days_needed_base = 135 
-    elif "lip balm" in cat: days_needed_base = 90   
+    elif "lip balm" in cat: days_needed_base = 90    
     elif "lip mask" in cat: days_needed_base = 225 
     elif "foundation" in cat: days_needed_base = 150 
     elif "concealer" in cat: days_needed_base = 225 
@@ -476,9 +476,8 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-       # Filter and sort panned products by purchase date (oldest first)
-products = [p for p in st.session_state.db.get("products", []) if p.get("in_project_pan", False)]
-products = sorted(products, key=lambda x: x.get("purchase_date", "9999-12-31"))
+        products = [p for p in st.session_state.db.get("products", []) if p.get("in_project_pan", False)]
+        products = sorted(products, key=lambda x: x.get("purchase_date", "9999-12-31"))
 
         if not products:
             st.info("No active items in Project Pan. Tag items as panned from your collection.")
@@ -513,7 +512,6 @@ products = sorted(products, key=lambda x: x.get("purchase_date", "9999-12-31"))
 
                 st.markdown("<br>", unsafe_allow_html=True)
                 
-                # Automated [+] and [-] buttons for uses and XP
                 st.markdown("<p style='font-size:0.85rem; color:#8c7aa9; margin-bottom:5px;'>Quick Use Counter:</p>", unsafe_allow_html=True)
                 col_btn_minus, col_uses_disp, col_btn_plus = st.columns([1, 2, 1])
                 with col_btn_minus:
@@ -655,38 +653,4 @@ products = sorted(products, key=lambda x: x.get("purchase_date", "9999-12-31"))
         
         col1, col2 = st.columns(2)
         with col1:
-            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_items}</div><div class="metric-label">Active Items</div></div>', unsafe_allow_html=True)
-            st.markdown("<br>", unsafe_allow_html=True)
-            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_empties}</div><div class="metric-label">Total Empties</div></div>', unsafe_allow_html=True)
-        with col2:
-            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_spent:.2f}</div><div class="metric-label">Total Value</div></div>', unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        # Extended analytics: favorite brands by quantity and category by total uses
-        if products:
-            # Brand counts
-            brand_counts = {}
-            for p in products:
-                b = p.get("brand", "Unknown")
-                brand_counts[b] = brand_counts.get(b, 0) + 1
-            sorted_brands = sorted(brand_counts.items(), key=lambda x: x[1], reverse=True)
-
-            # Category uses
-            category_uses = {}
-            for p in products:
-                c = p.get("category", "Uncategorized")
-                u = p.get("total_uses", 0)
-                category_uses[c] = category_uses.get(c, 0) + u
-            sorted_categories = sorted(category_uses.items(), key=lambda x: x[1], reverse=True)
-
-            fav_brand_name, fav_brand_count = sorted_brands[0]
-            top_cat_name, top_cat_uses = sorted_categories[0] if sorted_categories else ("None", 0)
-
-            st.markdown(f"""
-            <div class="vanity-card">
-                <h4 style="margin:0 0 0.5rem 0; font-family:'Playfair Display', serif; color:#4a3468;">Brand & Category Insights</h4>
-                <p style="margin:0 0 0.3rem 0; font-size:0.9rem;">👑 <b>Favorite Brand (Most Items):</b> {fav_brand_name} ({fav_brand_count} items)</p>
-                <p style="margin:0; font-size:0.9rem;">🔥 <b>Top Category by Uses:</b> {top_cat_name} ({top_cat_uses} total uses)</p>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f'<div
