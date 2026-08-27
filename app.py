@@ -5,7 +5,7 @@ import os
 import json
 
 # ---------------------------------------------------------
-# Konfiguracja Strony i Nawigacja
+# Page Configuration & Navigation
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="Vanity Sanctuary",
@@ -14,18 +14,16 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Obsługa kliknięć z adresu URL
+# Odczyt strony z parametrów URL
 query_params = st.query_params
 if "page" in query_params:
     st.session_state.current_page = query_params["page"]
-    st.query_params.clear()
-    st.rerun()
 
 if "current_page" not in st.session_state:
     st.session_state.current_page = "Home"
 
 # ---------------------------------------------------------
-# Globalne Style CSS
+# Global Styles (Tło i Ramki)
 # ---------------------------------------------------------
 st.markdown("""
 <style>
@@ -89,7 +87,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# Nagłówek
+# Header Block
 # ---------------------------------------------------------
 st.markdown("""
 <div class="sanctuary-header">
@@ -99,7 +97,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# STRONA GŁÓWNA: KAFELKI
+# HOME PAGE (DUŻE KWADRATY + DZIAŁAJĄCE KLIKANIE)
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
 
@@ -135,10 +133,10 @@ if st.session_state.current_page == "Home":
             align-items: center;
             padding: 22px 10px 18px 10px;
             box-sizing: border-box;
-            text-decoration: none;
             box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06);
             transition: transform 0.15s ease, box-shadow 0.15s ease;
             cursor: pointer;
+            user-select: none;
         }
 
         .tile-card:hover {
@@ -162,26 +160,31 @@ if st.session_state.current_page == "Home":
             margin-bottom: 2px;
         }
     </style>
+    <script>
+        function goToPage(pageName) {
+            window.top.location.href = window.top.location.pathname + '?page=' + encodeURIComponent(pageName);
+        }
+    </script>
     </head>
     <body>
 
     <div class="grid-container">
-        <a class="tile-card" href="?page=Collection" target="_top">
+        <div class="tile-card" onclick="goToPage('Collection')">
             <div class="tile-title">Your<br>Collection</div>
             <div class="tile-emoji">🦇</div>
-        </a>
-        <a class="tile-card" href="?page=Project Pan" target="_top">
+        </div>
+        <div class="tile-card" onclick="goToPage('Project Pan')">
             <div class="tile-title">Project<br>Pan</div>
             <div class="tile-emoji">🌕</div>
-        </a>
-        <a class="tile-card" href="?page=No-Buy Rules" target="_top">
+        </div>
+        <div class="tile-card" onclick="goToPage('No-Buy Rules')">
             <div class="tile-title">No - Buy<br>& Rewards</div>
             <div class="tile-emoji">🌸</div>
-        </a>
-        <a class="tile-card" href="?page=Analytics" target="_top">
+        </div>
+        <div class="tile-card" onclick="goToPage('Analytics')">
             <div class="tile-title">Beauty<br>stats</div>
             <div class="tile-emoji">🐈‍⬛</div>
-        </a>
+        </div>
     </div>
 
     </body>
@@ -197,11 +200,12 @@ if st.session_state.current_page == "Home":
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# STRONY WEWNĘTRZNE
+# INNER PAGES
 # ---------------------------------------------------------
 else:
     if st.button("← Back to Menu"):
         st.session_state.current_page = "Home"
+        st.query_params.clear()
         st.rerun()
 
     st.markdown("---")
