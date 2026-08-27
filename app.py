@@ -476,7 +476,9 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
-        products = [p for p in st.session_state.db.get("products", []) if p.get("in_project_pan", False)]
+       # Filter and sort panned products by purchase date (oldest first)
+products = [p for p in st.session_state.db.get("products", []) if p.get("in_project_pan", False)]
+products = sorted(products, key=lambda x: x.get("purchase_date", "9999-12-31"))
 
         if not products:
             st.info("No active items in Project Pan. Tag items as panned from your collection.")
