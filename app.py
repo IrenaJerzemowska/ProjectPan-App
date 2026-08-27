@@ -22,14 +22,12 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
 
-    /* Clean Solid Lilac Background */
     .stApp {
         background-color: #d8cde9 !important;
         color: #382a4b;
         font-family: 'Lora', serif;
     }
 
-    /* Container Constrain */
     .block-container {
         max-width: 480px !important;
         padding-top: 1.5rem !important;
@@ -38,7 +36,6 @@ st.markdown("""
         padding-right: 1rem !important;
     }
 
-    /* Header Styling */
     .sanctuary-header {
         background: #ffffff;
         border-radius: 6px;
@@ -67,7 +64,6 @@ st.markdown("""
         font-weight: 400;
     }
 
-    /* Bottom Quote Card */
     .quote-card {
         background: #ffffff;
         border: 1px solid #e2d8ee;
@@ -87,7 +83,6 @@ st.markdown("""
         letter-spacing: 0.2px;
     }
 
-    /* Inner Cards - Coherent Radius & Style */
     .vanity-card {
         background: #ffffff;
         border-radius: 6px;
@@ -118,7 +113,6 @@ st.markdown("""
         margin-top: 2px;
     }
 
-    /* Inputs Fix for Coherency */
     div[data-baseweb="input"] > div, div[data-baseweb="select"] > div, div[data-baseweb="base-input"] {
         background-color: #ffffff !important;
         border-color: #dcd0f0 !important;
@@ -147,22 +141,19 @@ def load_data():
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                if "products" not in data:
-                    data["products"] = []
-                if "wishlist" not in data:
-                    data["wishlist"] = []
-                if "empties" not in data:
-                    data["empties"] = []
-                if "stats" not in data:
-                    data["stats"] = {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0}
-                if "no_buy_start_date" not in data["stats"]:
-                    data["stats"]["no_buy_start_date"] = str(datetime.date.today())
-                if "xp" not in data["stats"]:
-                    data["stats"]["xp"] = 0
+                if "products" not in data: data["products"] = []
+                if "wishlist" not in data: data["wishlist"] = []
+                if "empties" not in data: data["empties"] = []
+                if "stats" not in data: 
+                    data["stats"] = {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0, "rewards_redeemed": 0}
+                if "no_buy_start_date" not in data["stats"]: data["stats"]["no_buy_start_date"] = str(datetime.date.today())
+                if "xp" not in data["stats"]: data["stats"]["xp"] = 0
+                if "finished_lip_products" not in data["stats"]: data["stats"]["finished_lip_products"] = 0
+                if "rewards_redeemed" not in data["stats"]: data["stats"]["rewards_redeemed"] = 0
                 return data
         except Exception:
-            return {"products": [], "wishlist": [], "empties": [], "settings": {}, "stats": {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0}}
-    return {"products": [], "wishlist": [], "empties": [], "settings": {}, "stats": {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0}}
+            return {"products": [], "wishlist": [], "empties": [], "stats": {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0, "rewards_redeemed": 0}}
+    return {"products": [], "wishlist": [], "empties": [], "stats": {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0, "rewards_redeemed": 0}}
 
 def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
@@ -185,81 +176,37 @@ def calculate_cost_per_use(price, total_uses):
     return price if total_uses <= 0 else price / total_uses
 
 def get_pan_level(xp):
-    if xp < 50:
-        return "Novice Panner 🌱", 50
-    elif xp < 150:
-        return "Consistent Enthusiast 🌿", 150
-    elif xp < 300:
-        return "Expert Finisher 🌸", 300
-    else:
-        return "Master of the Pan 👑", 500
+    if xp < 50: return "Novice Panner 🌱", 50
+    elif xp < 150: return "Consistent Enthusiast 🌿", 150
+    elif xp < 300: return "Expert Finisher 🌸", 300
+    else: return "Master of the Pan 👑", 500
 
-def estimate_pan_completion(category, capacity, unit, daily_uses):
-    if daily_uses <= 0:
-        return None, None, 0
-        
+def estimate_pan_completion(category, daily_uses):
+    if daily_uses <= 0: return None, None, 0
     cat = category.lower()
     
-    if "lipstick" in cat:
-        days_needed_base = 730 
-    elif "liquid lipstick" in cat:
-        days_needed_base = 270 
-    elif "lip gloss" in cat:
-        days_needed_base = 135 
-    elif "lip balm" in cat:
-        days_needed_base = 90   
-    elif "lip mask" in cat:
-        days_needed_base = 225 
-    elif "foundation" in cat:
-        days_needed_base = 150 
-    elif "concealer" in cat:
-        days_needed_base = 225 
-    elif "powder" in cat:
-        days_needed_base = 300 
-    elif "setting spray" in cat:
-        days_needed_base = 120 
-    elif "contour" in cat:
-        days_needed_base = 300 
-    elif "cream blush" in cat or "blush" in cat and "cream" in cat:
-        days_needed_base = 365 
-    elif "powder blush" in cat or ("blush" in cat and "powder" in cat):
-        days_needed_base = 1095 
-    elif "cream highlighter" in cat:
-        days_needed_base = 540 
-    elif "powder highlighter" in cat or ("highlighter" in cat and "powder" in cat):
-        days_needed_base = 1460 
-    elif "eyeshadow palette" in cat:
-        days_needed_base = 1095 
-    elif "mascara" in cat:
-        days_needed_base = 120 
-    elif "eyeliner" in cat:
-        days_needed_base = 210 
-    elif "lip liner" in cat:
-        days_needed_base = 225 
-    elif "brow pen" in cat:
-        days_needed_base = 120 
-    elif "brow gel" in cat:
-        days_needed_base = 150 
-    else:
-        days_needed_base = 250
+    if "lipstick" in cat: days_needed_base = 730 
+    elif "liquid lipstick" in cat: days_needed_base = 270 
+    elif "lip gloss" in cat: days_needed_base = 135 
+    elif "lip balm" in cat: days_needed_base = 90   
+    elif "lip mask" in cat: days_needed_base = 225 
+    elif "foundation" in cat: days_needed_base = 150 
+    elif "concealer" in cat: days_needed_base = 225 
+    elif "powder" in cat: days_needed_base = 300 
+    elif "setting spray" in cat: days_needed_base = 120 
+    elif "contour" in cat: days_needed_base = 300 
+    elif "blush" in cat: days_needed_base = 365 
+    elif "highlighter" in cat: days_needed_base = 540 
+    elif "eyeshadow palette" in cat: days_needed_base = 1095 
+    elif "mascara" in cat: days_needed_base = 120 
+    elif "eyeliner" in cat: days_needed_base = 210 
+    elif "brow pen" in cat: days_needed_base = 120 
+    elif "brow gel" in cat: days_needed_base = 150 
+    else: days_needed_base = 250
 
     days_needed = int(days_needed_base / daily_uses)
-    total_applications_needed = days_needed_base 
-    
     completion_date = datetime.date.today() + datetime.timedelta(days=max(days_needed, 1))
-    return days_needed, completion_date, total_applications_needed
-
-def image_to_base64(uploaded_file):
-    if uploaded_file is not None:
-        try:
-            image = Image.open(uploaded_file)
-            image.thumbnail((400, 400))
-            buffered = io.BytesIO()
-            image.convert("RGB").save(buffered, format="JPEG", quality=85)
-            return base64.b64encode(buffered.getvalue()).decode()
-        except Exception:
-            return None
-    return None
+    return days_needed, completion_date, days_needed_base
 
 # ---------------------------------------------------------
 # Header Block
@@ -272,10 +219,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# PAGE 1: HOME
+# PAGE ROUTING
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
-    
     col1, col2 = st.columns(2)
     with col1:
         if st.button("Your\nCollection\n\n🦇", key="btn_coll", use_container_width=True):
@@ -306,9 +252,6 @@ if st.session_state.current_page == "Home":
     </div>
     """, unsafe_allow_html=True)
 
-# ---------------------------------------------------------
-# INNER PAGES
-# ---------------------------------------------------------
 else:
     if st.button("← Back to Menu"):
         st.session_state.current_page = "Home"
@@ -331,7 +274,6 @@ else:
                 st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
-
         products = st.session_state.db.get("products", [])
         finishing_id_key = "finishing_product_id"
 
@@ -366,21 +308,18 @@ else:
                     with col_act:
                         if st.button("+ Log Use", key=f"quick_use_{p['id']}"):
                             p["total_uses"] = p.get("total_uses", 0) + 1
-                            if "stats" not in st.session_state.db:
-                                st.session_state.db["stats"] = {"xp": 0}
+                            if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
                             st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + 5
                             save_data(st.session_state.db)
                             st.rerun()
 
                 st.markdown("</div>", unsafe_allow_html=True)
 
-                if edit_mode_key not in st.session_state:
-                    st.session_state[edit_mode_key] = False
+                if edit_mode_key not in st.session_state: st.session_state[edit_mode_key] = False
 
                 c1, c2, c3, c4 = st.columns(4)
                 with c1:
-                    btn_label = "Unpan" if is_pan else "Pan ✨"
-                    if st.button(btn_label, key=f"pan_{p['id']}"):
+                    if st.button("Unpan" if is_pan else "Pan ✨", key=f"pan_{p['id']}"):
                         p["in_project_pan"] = not is_pan
                         save_data(st.session_state.db)
                         st.rerun()
@@ -396,27 +335,17 @@ else:
                     if st.button("Delete 🗑️", key=f"del_{p['id']}"):
                         st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
                         save_data(st.session_state.db)
-                        st.success("Product deleted.")
                         st.rerun()
 
                 if st.session_state.get(finishing_id_key) == p["id"]:
-                    st.markdown(f"""
-                    <div style="background-color: #f4ecfb; border: 1px solid #d4c2ec; border-radius: 6px; padding: 1.2rem; margin-top: 10px; margin-bottom: 10px;">
-                        <h4 style="margin:0 0 0.3rem 0; font-family:'Playfair Display', serif; color:#4a3468;">🌟 Review & Grade Finished Product</h4>
-                        <p style="margin:0; font-size:0.9rem; color:#5c5366;">How was your experience with <b>{p['brand']} - {p['shade']}</b>?</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
                     with st.form(key=f"review_form_{p['id']}"):
-                        finish_rating = st.slider("Rating (Stars)", min_value=0, max_value=5, value=5, step=1, help="0 stars is the worst, 5 stars is the best!")
-                        finish_review = st.text_area("Write a short review or thoughts:")
-                        
+                        st.markdown(f"**Review & Grade Finished Product: {p['brand']} - {p['shade']}**")
+                        finish_rating = st.slider("Rating (Stars)", 0, 5, 5, 1)
+                        finish_review = st.text_area("Thoughts / Mini Review:")
                         rc1, rc2 = st.columns(2)
-                        with rc1:
-                            submit_review = st.form_submit_button("Complete & Archive 🪦")
-                        with rc2:
-                            cancel_review = st.form_submit_button("Cancel")
-                            
+                        with rc1: submit_review = st.form_submit_button("Complete & Archive 🪦")
+                        with rc2: cancel_review = st.form_submit_button("Cancel")
+                        
                         if submit_review:
                             is_lip = p["category"].lower() in LIP_CATEGORIES
                             if is_lip:
@@ -429,99 +358,50 @@ else:
                             empty_item["rating"] = finish_rating
                             empty_item["review"] = finish_review
                             
-                            if "empties" not in st.session_state.db:
-                                st.session_state.db["empties"] = []
+                            if "empties" not in st.session_state.db: st.session_state.db["empties"] = []
                             st.session_state.db["empties"].append(empty_item)
-                            
-                            if "stats" not in st.session_state.db:
-                                st.session_state.db["stats"] = {"xp": 0}
                             st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + 50
                             st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
                             st.session_state[finishing_id_key] = None
                             save_data(st.session_state.db)
-                            
-                            if is_lip and st.session_state.db["stats"]["finished_lip_products"] % 5 == 0:
-                                st.session_state["show_lip_reward_banner"] = True
                             st.rerun()
-                            
                         if cancel_review:
                             st.session_state[finishing_id_key] = None
                             st.rerun()
 
-                if st.session_state[edit_mode_key]:
+                if st.session_state.get(edit_mode_key):
                     with st.form(key=f"edit_form_{p['id']}"):
-                        st.markdown(f"**Edit details for {p['brand']} - {p['shade']}**")
                         new_brand = st.text_input("Brand", value=p["brand"])
-                        new_shade = st.text_input("Shade / Variant", value=p["shade"] if p["shade"] != "N/A" else "")
-                        
-                        try:
-                            cat_index = CATEGORIES.index(p["category"].lower())
-                        except ValueError:
-                            cat_index = 0
-                        new_category = st.selectbox("Category", CATEGORIES, index=cat_index)
-
-                        ec1, ec2 = st.columns(2)
-                        with ec1:
-                            new_price = st.number_input("Price", min_value=0.0, value=float(p["price"]))
-                            try:
-                                curr_index = ["GBP", "PLN", "EUR", "USD"].index(p["currency"])
-                            except ValueError:
-                                curr_index = 0
-                            new_currency = st.selectbox("Currency", ["GBP", "PLN", "EUR", "USD"], index=curr_index)
-                            
-                            try:
-                                parsed_date = datetime.datetime.strptime(p["purchase_date"], "%Y-%m-%d").date()
-                            except Exception:
-                                parsed_date = datetime.date.today()
-                            new_purchase_date = st.date_input("Purchase Date", value=parsed_date)
-                        with ec2:
-                            new_capacity = st.number_input("Capacity", min_value=0.0, value=float(p.get("capacity", 10.0)))
-                            try:
-                                unit_index = ["ml", "g", "items"].index(p.get("unit", "ml"))
-                            except ValueError:
-                                unit_index = 0
-                            new_unit = st.selectbox("Unit", ["ml", "g", "items"], index=unit_index)
-                            new_uses = st.number_input("Total Uses", min_value=0, value=int(p.get("total_uses", 0)))
-
+                        new_shade = st.text_input("Shade", value=p["shade"] if p["shade"] != "N/A" else "")
+                        new_category = st.selectbox("Category", CATEGORIES, index=CATEGORIES.index(p["category"].lower()) if p["category"].lower() in CATEGORIES else 0)
+                        new_price = st.number_input("Price", min_value=0.0, value=float(p["price"]))
+                        new_currency = st.selectbox("Currency", ["GBP", "PLN", "EUR", "USD"], index=["GBP", "PLN", "EUR", "USD"].index(p["currency"]) if p["currency"] in ["GBP", "PLN", "EUR", "USD"] else 0)
                         if st.form_submit_button("Save Changes ✓"):
                             p["brand"] = new_brand
                             p["shade"] = new_shade if new_shade else "N/A"
                             p["category"] = new_category
                             p["price"] = float(new_price)
                             p["currency"] = new_currency
-                            p["purchase_date"] = str(new_purchase_date)
-                            p["capacity"] = float(new_capacity)
-                            p["unit"] = new_unit
-                            p["total_uses"] = int(new_uses)
-                            
                             save_data(st.session_state.db)
                             st.session_state[edit_mode_key] = False
-                            st.success("Product updated successfully!")
                             st.rerun()
-
                 st.markdown("<br>", unsafe_allow_html=True)
 
     # --- ADD PRODUCT ---
     elif st.session_state.current_page == "Add Product":
         st.markdown("### Add New Product")
-        
         with st.form("add_product_form"):
             brand = st.text_input("Brand")
             shade = st.text_input("Shade / Variant (Optional)")
             category = st.selectbox("Category", CATEGORIES)
-            
-            ac1, ac2 = st.columns(2)
-            with ac1:
-                price = st.number_input("Price", min_value=0.0, value=0.0)
-                currency = st.selectbox("Currency", ["GBP", "PLN", "EUR", "USD"])
-                purchase_date = st.date_input("Purchase Date", value=datetime.date.today())
-            with ac2:
-                capacity = st.number_input("Capacity / Size", min_value=0.0, value=10.0)
-                unit = st.selectbox("Unit", ["ml", "g", "items"])
-                initial_uses = st.number_input("Initial Uses", min_value=0, value=0)
+            price = st.number_input("Price", min_value=0.0, value=0.0)
+            currency = st.selectbox("Currency", ["GBP", "PLN", "EUR", "USD"])
+            purchase_date = st.date_input("Purchase Date", value=datetime.date.today())
+            capacity = st.number_input("Capacity / Size", min_value=0.0, value=10.0)
+            unit = st.selectbox("Unit", ["ml", "g", "items"])
+            initial_uses = st.number_input("Initial Uses", min_value=0, value=0)
 
-            submitted = st.form_submit_button("Add to Collection ✨")
-            if submitted:
+            if st.form_submit_button("Add to Collection ✨"):
                 if not brand:
                     st.error("Please enter a brand name.")
                 else:
@@ -540,89 +420,48 @@ else:
                     }
                     st.session_state.db["products"].append(new_item)
                     save_data(st.session_state.db)
-                    st.success("Product added successfully!")
+                    st.success("Product added!")
                     st.session_state.current_page = "Collection"
                     st.rerun()
 
     # --- EMPTIES GRAVEYARD ---
     elif st.session_state.current_page == "Empties":
         st.markdown("### Empties Graveyard 🪦")
-        st.markdown("<p style='color:#8c7aa9; font-size:0.9rem;'>Celebrating your successfully panned milestones.</p>", unsafe_allow_html=True)
-        
         empties = st.session_state.db.get("empties", [])
-        edit_empty_key = "editing_empty_id"
-        
         if not empties:
-            st.info("No empty products archived yet. Finish items from your collection to see them here!")
+            st.info("No empty products archived yet.")
         else:
             for e in reversed(empties):
-                rating_stars = "⭐" * e.get("rating", 0) if "rating" in e else "No rating"
-                review_text = e.get("review", "")
-                review_display = f"<p style='margin:6px 0 0 0; font-size:0.86rem; color:#5c5366; font-style:italic;'>\"{review_text}\"</p>" if review_text else ""
-                
                 st.markdown(f"""
                 <div class="vanity-card">
                     <h4 style="margin:0 0 0.3rem 0; font-family:'Playfair Display', serif;">{e['brand']} — {e['shade']}</h4>
-                    <p style="margin:0 0 0.4rem 0; color:#8c7aa9; font-size:0.85rem;">Category: {e['category']} | Finished on {e.get('finished_date', 'Unknown')}</p>
-                    <p style="margin:0 0 0.3rem 0; font-size:0.88rem;"><strong>Rating:</strong> {rating_stars} ({e.get('rating', 0)}/5)</p>
-                    <p style="margin:0; font-size:0.88rem;"><strong>Lifespan:</strong> {e.get('final_days_owned', 0)} days | <strong>Total Uses:</strong> {e.get('total_uses', 0)} | <strong>Final CPU:</strong> {e.get('final_cpu', 0):.2f} {e['currency']}</p>
-                    {review_display}
+                    <p style="margin:0 0 0.4rem 0; color:#8c7aa9; font-size:0.85rem;">Finished on {e.get('finished_date', 'Unknown')} | Rating: {'⭐' * e.get('rating', 0)}</p>
+                    <p style="margin:0; font-size:0.88rem;">Lifespan: {e.get('final_days_owned', 0)} days | Total Uses: {e.get('total_uses', 0)}</p>
                 </div>
                 """, unsafe_allow_html=True)
-                
-                ec1, ec2 = st.columns(2)
-                with ec1:
-                    if st.button("Edit Review ✏️", key=f"edit_empty_{e['id']}"):
-                        st.session_state[edit_empty_key] = e["id"]
-                        st.rerun()
-                with ec2:
-                    if st.button("Delete 🗑️", key=f"del_empty_{e['id']}"):
-                        st.session_state.db["empties"] = [item for item in st.session_state.db["empties"] if item["id"] != e["id"]]
-                        save_data(st.session_state.db)
-                        st.success("Removed item from graveyard.")
-                        st.rerun()
-                        
-                if st.session_state.get(edit_empty_key) == e["id"]:
-                    with st.form(key=f"edit_empty_form_{e['id']}"):
-                        st.markdown(f"**Edit Review for {e['brand']} - {e['shade']}**")
-                        new_emp_rating = st.slider("Rating (Stars)", min_value=0, max_value=5, value=int(e.get("rating", 5)), step=1, key=f"er_{e['id']}")
-                        new_emp_review = st.text_area("Review", value=e.get("review", ""), key=f"ev_{e['id']}")
-                        
-                        erc1, erc2 = st.columns(2)
-                        with erc1:
-                            if st.form_submit_button("Update Review ✓"):
-                                e["rating"] = new_emp_rating
-                                e["review"] = new_emp_review
-                                save_data(st.session_state.db)
-                                st.session_state[edit_empty_key] = None
-                                st.success("Review updated successfully!")
-                                st.rerun()
-                        with erc2:
-                            if st.form_submit_button("Cancel"):
-                                st.session_state[edit_empty_key] = None
-                                st.rerun()
-
-                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("Delete from Graveyard 🗑️", key=f"del_empty_{e['id']}"):
+                    st.session_state.db["empties"] = [item for item in st.session_state.db["empties"] if item["id"] != e["id"]]
+                    save_data(st.session_state.db)
+                    st.rerun()
 
     # --- PROJECT PAN ---
     elif st.session_state.current_page == "Project Pan":
         st.markdown("### Project Pan (Gamified) 🌕")
         
         current_xp = st.session_state.db.get("stats", {}).get("xp", 0)
-        current_level_title, next_level_xp = get_pan_level(current_xp)
+        current_level_title, _ = get_pan_level(current_xp)
         
         st.markdown(f"""
         <div class="vanity-card" style="background-color: #f7f3fd; text-align: center;">
             <h4 style="margin:0; font-family:'Playfair Display', serif; color:#4a3468;">Rank: {current_level_title}</h4>
-            <p style="margin:5px 0 0 0; font-size: 0.9rem; color:#8c7aa9;">Total XP: <b>{current_xp} XP</b></p>
+            <p style="margin:5px 0 0 0; font-size: 0.9rem; color:#8c7aa9;">Total XP: <b>{current_xp} XP</b> (+5 XP per logged use!)</p>
         </div>
         """, unsafe_allow_html=True)
 
         products = [p for p in st.session_state.db.get("products", []) if p.get("in_project_pan", False)]
-        pan_finishing_key = "pan_finishing_id"
 
         if not products:
-            st.info("No active items in Project Pan. Add items from your collection to start earning XP!")
+            st.info("No active items in Project Pan. Tag items as panned from your collection.")
         else:
             for p in products:
                 days = calculate_days_owned(p["purchase_date"])
@@ -635,56 +474,146 @@ else:
                 """, unsafe_allow_html=True)
 
                 m1, m2, m3 = st.columns(3)
-                with m1:
-                    st.markdown(f'<div class="metric-box"><div class="metric-value">{days}</div><div class="metric-label">Days Owned</div></div>', unsafe_allow_html=True)
-                with m2:
-                    st.markdown(f'<div class="metric-box"><div class="metric-value">{total_uses}</div><div class="metric-label">Uses</div></div>', unsafe_allow_html=True)
-                with m3:
-                    st.markdown(f'<div class="metric-box"><div class="metric-value">{cpu:.2f} {p["currency"]}</div><div class="metric-label">Cost / Use</div></div>', unsafe_allow_html=True)
+                with m1: st.markdown(f'<div class="metric-box"><div class="metric-value">{days}</div><div class="metric-label">Days Owned</div></div>', unsafe_allow_html=True)
+                with m2: st.markdown(f'<div class="metric-box"><div class="metric-value">{total_uses}</div><div class="metric-label">Uses</div></div>', unsafe_allow_html=True)
+                with m3: st.markdown(f'<div class="metric-box"><div class="metric-value">{cpu:.2f} {p["currency"]}</div><div class="metric-label">Cost / Use</div></div>', unsafe_allow_html=True)
 
                 st.markdown("<br>", unsafe_allow_html=True)
-                daily_uses_input = st.number_input("Estimated daily applications:", min_value=1, max_value=5, value=1, step=1, key=f"d_uses_{p['id']}")
+                daily_uses_input = st.number_input("Estimated daily applications:", min_value=1, max_value=5, value=1, key=f"d_uses_{p['id']}")
+                d_needed, target_date, total_apps_needed = estimate_pan_completion(p["category"], daily_uses_input)
                 
-                d_needed, target_date, total_apps_needed = estimate_pan_completion(p["category"], p.get("capacity", 10.0), p.get("unit", "ml"), daily_uses_input)
                 if d_needed and total_apps_needed > 0:
-                    formatted_date = target_date.strftime("%B %Y")
                     progress_ratio = min(float(total_uses) / total_apps_needed, 1.0)
-                    
                     st.markdown(f"""
                     <div style="background-color: #f2ebfc; border-radius: 6px; padding: 0.8rem; margin-top: 10px; font-size: 0.88rem; color: #4a3468;">
-                        🔮 <strong>Timeline Forecast:</strong> Approx. <b>{d_needed} days</b> ({formatted_date}) to finish based on community ProjectPan data.
+                        🔮 <strong>Forecast:</strong> Approx. <b>{d_needed} days</b> ({target_date.strftime('%B %Y')}) to finish.
                     </div>
                     """, unsafe_allow_html=True)
-                    
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    st.markdown(f"<p style='font-size:0.8rem; color:#6b5b7a; margin-bottom:4px;'><b>Visual Tracking Progress:</b> {total_uses} / ~{int(total_apps_needed)} baseline uses ({int(progress_ratio * 100)}%)</p>", unsafe_allow_html=True)
                     st.progress(progress_ratio)
 
                 st.markdown("<br>", unsafe_allow_html=True)
                 col_add, col_btn = st.columns([2, 1])
                 with col_add:
-                    add_uses = st.number_input("Log Uses:", min_value=1, max_value=10, value=1, step=1, key=f"uses_{p['id']}")
+                    add_uses = st.number_input("Add uses:", min_value=1, max_value=10, value=1, key=f"uses_{p['id']}")
                 with col_btn:
                     st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("Log (+XP)", key=f"btn_{p['id']}"):
+                    if st.button("Log Uses (+XP)", key=f"btn_{p['id']}"):
+                        # Automatically update uses and add XP immediately
                         p["total_uses"] = p.get("total_uses", 0) + add_uses
-                        if "stats" not in st.session_state.db:
-                            st.session_state.db["stats"] = {"xp": 0}
+                        if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
                         st.session_state.db["stats"]["xp"] = st.session_state.db["stats"].get("xp", 0) + (add_uses * 5)
                         save_data(st.session_state.db)
+                        st.success(f"Logged {add_uses} use(s) and added +{add_uses * 5} XP!")
                         st.rerun()
 
-                st.markdown("<br>", unsafe_allow_html=True)
-                pc1, pc2 = st.columns(2)
-                with pc1:
-                    if st.button("Finish Item 🎉", key=f"pan_fin_btn_{p['id']}"):
-                        st.session_state[pan_finishing_key] = p["id"]
-                        st.rerun()
-                with pc2:
-                    if st.button("Delete Item 🗑️", key=f"pan_del_btn_{p['id']}"):
-                        st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
-                        save_data(st.session_state.db)
-                        st.success("Product deleted.")
-                        st.rerun()
-                
                 st.markdown("</div>", unsafe_allow_html=True)
+
+    # --- WISHLIST ---
+    elif st.session_state.current_page == "Wishlist":
+        st.markdown("### Wishlist ✨")
+        st.markdown("<p style='color:#8c7aa9; font-size:0.9rem;'>Track items you are considering before buying.</p>", unsafe_allow_html=True)
+
+        with st.form("add_wishlist_form"):
+            w_brand = st.text_input("Brand")
+            w_item = st.text_input("Item Name / Shade")
+            w_price = st.number_input("Estimated Price", min_value=0.0, value=0.0)
+            w_currency = st.selectbox("Currency", ["GBP", "PLN", "EUR", "USD"], key="w_curr")
+            w_notes = st.text_area("Why do you want this? Any dupes you own?")
+            
+            if st.form_submit_button("Add to Wishlist"):
+                if not w_brand:
+                    st.error("Please enter a brand.")
+                else:
+                    if "wishlist" not in st.session_state.db: st.session_state.db["wishlist"] = []
+                    st.session_state.db["wishlist"].append({
+                        "id": str(random.randint(100000, 999999)),
+                        "brand": w_brand,
+                        "item": w_item,
+                        "price": float(w_price),
+                        "currency": w_currency,
+                        "notes": w_notes
+                    })
+                    save_data(st.session_state.db)
+                    st.success("Added to wishlist!")
+                    st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        wishlist_items = st.session_state.db.get("wishlist", [])
+        if not wishlist_items:
+            st.info("Your wishlist is empty.")
+        else:
+            for w in wishlist_items:
+                st.markdown(f"""
+                <div class="vanity-card">
+                    <h4 style="margin:0 0 0.3rem 0; font-family:'Playfair Display', serif;">{w['brand']} — {w['item']}</h4>
+                    <p style="margin:0 0 0.3rem 0; color:#8c7aa9; font-size:0.85rem;">Price: {w['price']:.2f} {w['currency']}</p>
+                    <p style="margin:0; font-size:0.88rem; font-style:italic;">{w.get('notes', '')}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button("Remove 🗑️", key=f"del_wish_{w['id']}"):
+                    st.session_state.db["wishlist"] = [item for item in st.session_state.db["wishlist"] if item["id"] != w["id"]]
+                    save_data(st.session_state.db)
+                    st.rerun()
+
+    # --- NO-BUY & REWARDS ---
+    elif st.session_state.current_page == "No-Buy Rules":
+        st.markdown("### No-Buy & Rewards 🌸")
+        
+        stats = st.session_state.db.get("stats", {})
+        start_date_str = stats.get("no_buy_start_date", str(datetime.date.today()))
+        try:
+            start_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        except Exception:
+            start_date = datetime.date.today()
+            
+        days_on_no_buy = max((datetime.date.today() - start_date).days, 0)
+        finished_lips = stats.get("finished_lip_products", 0)
+        rewards_redeemed = stats.get("rewards_redeemed", 0)
+        available_rewards = (finished_lips // 5) - rewards_redeemed
+
+        st.markdown(f"""
+        <div class="vanity-card">
+            <h4 style="margin:0 0 0.5rem 0; font-family:'Playfair Display', serif;">No-Buy Streak Tracker</h4>
+            <p style="margin:0; font-size:1.1rem;">You have been strong for <b>{days_on_no_buy} days</b>!</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div class="vanity-card" style="background-color: #f7f3fd;">
+            <h4 style="margin:0 0 0.5rem 0; font-family:'Playfair Display', serif;">Lip Product Empties Reward System</h4>
+            <p style="margin:0 0 0.4rem 0; font-size:0.9rem;">Finish <b>5 lip products</b> = Unlock 1 luxury lip treat reward!</p>
+            <p style="margin:0; font-size:0.95rem;">Progress: <b>{finished_lips % 5} / 5</b> toward next reward (Total finished lips: {finished_lips})</p>
+            <p style="margin:5px 0 0 0; font-size:0.95rem; color:#4a3468;"><b>Available Rewards to Redeem:</b> {max(available_rewards, 0)}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if available_rewards > 0:
+            if st.button("🎁 Redeem Reward!"):
+                st.session_state.db["stats"]["rewards_redeemed"] = rewards_redeemed + 1
+                save_data(st.session_state.db)
+                st.success("Reward redeemed! Enjoy treating yourself!")
+                st.rerun()
+
+        if st.button("Reset No-Buy Start Date"):
+            st.session_state.db["stats"]["no_buy_start_date"] = str(datetime.date.today())
+            save_data(st.session_state.db)
+            st.success("Reset start date to today.")
+            st.rerun()
+
+    # --- ANALYTICS ---
+    elif st.session_state.current_page == "Analytics":
+        st.markdown("### Beauty Stats 🐈‍⬛")
+        products = st.session_state.db.get("products", [])
+        empties = st.session_state.db.get("empties", [])
+        
+        total_items = len(products)
+        total_spent = sum(p.get("price", 0) for p in products)
+        total_empties = len(empties)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_items}</div><div class="metric-label">Active Items</div></div>', unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_empties}</div><div class="metric-label">Total Empties</div></div>', unsafe_allow_html=True)
+        with col2:
+            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_spent:.2f}</div><div class="metric-label">Total Value</div></div>', unsafe_allow_html=True)
