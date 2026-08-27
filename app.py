@@ -268,6 +268,23 @@ else:
     if st.session_state.current_page == "Collection":
         st.markdown("### Your Collection")
         
+        # Calculate category counts dynamically
+        products = st.session_state.db.get("products", [])
+        cat_counts = {}
+        for p in products:
+            c = p.get("category", "Uncategorized")
+            cat_counts[c] = cat_counts.get(c, 0) + 1
+
+        # Display category counters cleanly
+        with st.expander("📊 View Category Counts"):
+            count_cols = st.columns(2)
+            sorted_cats = sorted(cat_counts.items(), key=lambda x: x[1], reverse=True)
+            for idx, (cat_name, count) in enumerate(sorted_cats):
+                with count_cols[idx % 2]:
+                    st.markdown(f"<span style='font-size:0.9rem; color:#4a3468;'>• {cat_name.title()}: <b>{count}</b></span>", unsafe_allow_html=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        
         col_c_btn1, col_c_btn2 = st.columns(2)
         with col_c_btn1:
             if st.button("+ Add New Product"):
@@ -279,7 +296,6 @@ else:
                 st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
-        products = st.session_state.db.get("products", [])
         finishing_id_key = "finishing_product_id"
 
         if not products:
@@ -486,7 +502,6 @@ else:
         """, unsafe_allow_html=True)
 
         products = [p for p in st.session_state.db.get("products", []) if p.get("in_project_pan", False)]
-        # Sort products so that the most recently used/logged product appears at the top
         products = sorted(products, key=lambda x: x.get("last_used_timestamp", x.get("purchase_date", "1970-01-01")), reverse=True)
 
         if not products:
@@ -644,26 +659,3 @@ else:
             <p style="margin:5px 0 0 0; font-size:0.95rem; color:#4a3468;"><b>Available Rewards to Redeem:</b> {max(available_rewards, 0)}</p>
         </div>
         """, unsafe_allow_html=True)
-
-        if available_rewards > 0:
-            if st.button("🎁 Redeem Reward!"):
-                st.session_state.db["stats"]["rewards_redeemed"] = rewards_redeemed + 1
-                save_data(st.session_state.db)
-                st.success("Reward redeemed! Enjoy treating yourself!")
-                st.rerun()
-
-    # --- ANALYTICS ---
-    elif st.session_state.current_page == "Analytics":
-        st.markdown("### Beauty Stats 🐈‍⬛")
-        products = st.session_state.db.get("products", [])
-        empties = st.session_state.db.get("empties", [])
-        
-        total_items = len(products)
-        total_spent = sum(p.get("price", 0) for p in products)
-        total_empties = len(empties)
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_items}</div><div class="metric-label">Active Items</div></div>', unsafe_allow_html=True)
-        with col2:
-            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_empties}</div><div class="metric-label">Empties Logged</div></div>', unsafe_allow_html=True)
