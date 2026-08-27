@@ -313,13 +313,9 @@ else:
                     with col_act:
                         if st.button("+ Log Use", key=f"quick_use_{p['id']}"):
                             p["total_uses"] = p.get("total_uses", 0) + 1
+                            p["last_used_timestamp"] = datetime.datetime.now().isoformat()
                             if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
                             st.session_state.db["stats"]["xp"] = max(st.session_state.db["stats"].get("xp", 0) + 5, 0)
-                            
-                            # Move product to the end of the products list so it becomes last (or top depending on view order)
-                            st.session_state.db["products"].remove(p)
-                            st.session_state.db["products"].append(p)
-
                             save_data(st.session_state.db)
                             st.rerun()
 
@@ -331,6 +327,8 @@ else:
                 with c1:
                     if st.button("Unpan" if is_pan else "Pan ✨", key=f"pan_{p['id']}"):
                         p["in_project_pan"] = not is_pan
+                        if p["in_project_pan"]:
+                            p["last_used_timestamp"] = datetime.datetime.now().isoformat()
                         save_data(st.session_state.db)
                         st.rerun()
                 with c2:
@@ -438,6 +436,7 @@ else:
                         "capacity": float(capacity),
                         "unit": unit,
                         "total_uses": int(initial_uses),
+                        "last_used_timestamp": datetime.datetime.now().isoformat() if int(initial_uses) > 0 else "1970-01-01T00:00:00",
                         "in_project_pan": False
                     }
                     st.session_state.db["products"].append(new_item)
@@ -487,7 +486,8 @@ else:
         """, unsafe_allow_html=True)
 
         products = [p for p in st.session_state.db.get("products", []) if p.get("in_project_pan", False)]
-        products = sorted(products, key=lambda x: x.get("purchase_date", "9999-12-31"))
+        # Sort products so that the most recently used/logged product appears at the top
+        products = sorted(products, key=lambda x: x.get("last_used_timestamp", x.get("purchase_date", "1970-01-01")), reverse=True)
 
         if not products:
             st.info("No active items in Project Pan. Tag items as panned from your collection.")
@@ -538,14 +538,10 @@ else:
                 with col_btn_plus:
                     if st.button("➕ +1", key=f"plus_{p['id']}"):
                         p["total_uses"] = p.get("total_uses", 0) + 1
+                        p["last_used_timestamp"] = datetime.datetime.now().isoformat()
                         if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
                         current_xp = st.session_state.db["stats"].get("xp", 0)
                         st.session_state.db["stats"]["xp"] = max(current_xp + 5, 0)
-                        
-                        # Move product to the end of the products list so it jumps to the top when rendered reversed/sorted
-                        st.session_state.db["products"].remove(p)
-                        st.session_state.db["products"].append(p)
-
                         save_data(st.session_state.db)
                         st.rerun()
 
