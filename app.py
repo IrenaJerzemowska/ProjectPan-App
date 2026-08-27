@@ -40,7 +40,7 @@ st.markdown("""
     /* Header Styling */
     .sanctuary-header {
         background: #ffffff;
-        border-radius: 4px;
+        border-radius: 6px;
         padding: 1.8rem 1rem 1.4rem 1rem;
         text-align: center;
         margin-bottom: 16px;
@@ -66,16 +66,16 @@ st.markdown("""
         font-weight: 400;
     }
 
-    /* Stylizacja przycisków menu (Grid Tile Buttons) */
+    /* Coherent Grid Tile Buttons */
     div[data-testid="column"] .stButton > button {
         background: #ffffff !important;
         border: 1px solid #e2d8ee !important;
-        border-radius: 4px !important;
+        border-radius: 6px !important;
         color: #554a60 !important;
         font-family: 'Playfair Display', serif !important;
         font-size: 1.25rem !important;
         font-weight: 700 !important;
-        height: 175px !important;
+        height: 160px !important;
         width: 100% !important;
         display: flex !important;
         flex-direction: column !important;
@@ -88,14 +88,13 @@ st.markdown("""
     }
 
     div[data-testid="column"] .stButton > button:hover {
-        transform: translateY(-3px) !important;
+        transform: translateY(-2px) !important;
         box-shadow: 0 8px 18px rgba(100, 80, 130, 0.12) !important;
-        border-color: #cbbba6 !important;
+        border-color: #cbbad9 !important;
         background-color: #ffffff !important;
         color: #3a3342 !important;
     }
 
-    /* Poprawka tekstu i emoji wewnątrz przycisku Streamlit */
     div[data-testid="column"] .stButton > button p {
         font-family: 'Playfair Display', serif !important;
         font-size: 1.25rem !important;
@@ -106,7 +105,6 @@ st.markdown("""
         text-align: center !important;
     }
 
-    /* Spójne odstępy siatki */
     div[data-testid="column"] {
         padding: 0 6px !important;
     }
@@ -119,11 +117,12 @@ st.markdown("""
     /* Bottom Quote Card */
     .quote-card {
         background: #ffffff;
-        border: 1.5px solid #3a3342;
-        border-radius: 2px;
+        border: 1px solid #e2d8ee;
+        border-radius: 6px;
         padding: 2.2rem 1rem;
         text-align: center;
         margin-top: 12px;
+        box-shadow: 0 4px 12px rgba(100, 80, 130, 0.04);
     }
 
     .quote-card p {
@@ -135,40 +134,42 @@ st.markdown("""
         letter-spacing: 0.2px;
     }
 
-    /* Inner Cards */
+    /* Inner Cards - Coherent Radius & Style */
     .vanity-card {
         background: #ffffff;
-        border-radius: 4px;
+        border-radius: 6px;
+        border: 1px solid #e9e2f4;
         padding: 1.2rem;
         margin-bottom: 1rem;
-        box-shadow: 0 3px 10px rgba(130, 110, 160, 0.05);
+        box-shadow: 0 3px 10px rgba(130, 110, 160, 0.04);
     }
 
     .metric-box {
         background: #f7f3fd;
         border: 1px solid #dcd0f0;
         padding: 0.8rem;
-        border-radius: 4px;
+        border-radius: 6px;
         text-align: center;
     }
     .metric-box .metric-value {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
         font-weight: 600;
         color: #4a3468;
         font-family: 'Playfair Display', serif;
     }
     .metric-box .metric-label {
-        font-size: 0.7rem;
+        font-size: 0.65rem;
         color: #8c7aa9;
         text-transform: uppercase;
         letter-spacing: 1px;
         margin-top: 2px;
     }
 
-    /* Inputs Fix */
-    div[data-baseweb="input"] > div, div[data-baseweb="select"] > div {
+    /* Inputs Fix for Coherency */
+    div[data-baseweb="input"] > div, div[data-baseweb="select"] > div, div[data-baseweb="base-input"] {
         background-color: #ffffff !important;
-        border-color: #cbbad9 !important;
+        border-color: #dcd0f0 !important;
+        border-radius: 6px !important;
         color: #382a4b !important;
     }
 </style>
@@ -217,6 +218,40 @@ def calculate_days_owned(purchase_date_str):
 def calculate_cost_per_use(price, total_uses):
     return price if total_uses <= 0 else price / total_uses
 
+def estimate_pan_completion(category, capacity, unit, daily_uses):
+    """
+    Szacowanie czasu zużycia na podstawie pojemności i średniego zużycia na 1 aplikację (w ml lub g).
+    Standardowe zużycie produktu na 1 użycie (w ml/g):
+    - Foundation/Setting spray: ~0.5 - 1.0 ml
+    - Concealer: ~0.1 - 0.2 ml
+    - Lipstick/Lip gloss: ~0.03 - 0.05 ml
+    - Mascara: ~0.05 ml
+    - Powder/Blush/Highlighter: ~0.05 - 0.1 g
+    """
+    if daily_uses <= 0 or capacity <= 0:
+        return None, None
+        
+    cat = category.lower()
+    if "foundation" in cat or "setting spray" in cat:
+        ml_per_use = 0.75
+    elif "concealer" in cat:
+        ml_per_use = 0.15
+    elif "lip" in cat:
+        ml_per_use = 0.04
+    elif "mascara" in cat:
+        ml_per_use = 0.05
+    elif "powder" in cat or "blush" in cat or "contour" in cat or "highlighter" in cat:
+        ml_per_use = 0.08
+    else:
+        ml_per_use = 0.1  # domyślnie
+
+    # całkowita liczba aplikacji do wykończenia pojemności
+    total_applications_needed = capacity / ml_per_use
+    days_needed = int(total_applications_needed / daily_uses)
+    
+    completion_date = datetime.date.today() + datetime.timedelta(days=max(days_needed, 1))
+    return days_needed, completion_date
+
 def image_to_base64(uploaded_file):
     if uploaded_file is not None:
         image = Image.open(uploaded_file)
@@ -241,7 +276,6 @@ st.markdown("""
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
 
-    # Row 1
     col1, col2 = st.columns(2)
     with col1:
         if st.button("Your\nCollection\n\n🦇", key="btn_coll"):
@@ -253,7 +287,6 @@ if st.session_state.current_page == "Home":
             st.session_state.current_page = "Project Pan"
             st.rerun()
 
-    # Row 2
     col3, col4 = st.columns(2)
     with col3:
         if st.button("No - Buy\n& Rewards\n\n🌸", key="btn_nobuy"):
@@ -265,7 +298,6 @@ if st.session_state.current_page == "Home":
             st.session_state.current_page = "Analytics"
             st.rerun()
 
-    # Bottom Quote Frame
     st.markdown("""
     <div class="quote-card">
         <p>Use what you love.<br>Finish what you start.</p>
@@ -307,18 +339,31 @@ else:
             for p in reversed(filtered_products):
                 days = calculate_days_owned(p["purchase_date"])
                 cpu = calculate_cost_per_use(p["price"], p.get("total_uses", 0))
+                is_pan = p.get("in_project_pan", False)
 
                 st.markdown(f"""
                 <div class="vanity-card">
                     <h4 style="margin:0 0 0.4rem 0; font-family:'Playfair Display', serif;">{p['brand']} — <span style="font-weight:400;">{p['name']}</span></h4>
-                    <p style="margin:0 0 0.8rem 0; color:#8c7aa9; font-size:0.88rem;">Category: {p['category']} | Shade: {p['shade']}</p>
+                    <p style="margin:0 0 0.6rem 0; color:#8c7aa9; font-size:0.88rem;">Category: {p['category']} | Shade: {p['shade']}</p>
                     <p style="margin:0; font-size:0.9rem;"><strong>Price:</strong> {p['price']:.2f} {p['currency']} | <strong>Age:</strong> {days} days | <strong>Uses:</strong> {p.get('total_uses', 0)} | <strong>CPU:</strong> {cpu:.2f} {p['currency']}</p>
-                </div>
                 """, unsafe_allow_html=True)
+
+                # Szybkie logowanie użycia bezpośrednio w kolekcji, jeśli produkt jest w Project Pan
+                if is_pan:
+                    st.markdown("<hr style='margin: 10px 0; border-color: #eee0f8;'>", unsafe_allow_html=True)
+                    col_info, col_act = st.columns([2, 1])
+                    with col_info:
+                        st.markdown("<p style='font-size:0.8rem; color:#6b5b7a; margin:0;'>✨ Active in Project Pan</p>", unsafe_allow_html=True)
+                    with col_act:
+                        if st.button("+ Log Use", key=f"quick_use_{p['id']}"):
+                            p["total_uses"] = p.get("total_uses", 0) + 1
+                            save_data(st.session_state.db)
+                            st.rerun()
+
+                st.markdown("</div>", unsafe_allow_html=True)
 
                 c1, c2 = st.columns(2)
                 with c1:
-                    is_pan = p.get("in_project_pan", False)
                     btn_label = "Remove from Pan" if is_pan else "Add to Project Pan ✨"
                     if st.button(btn_label, key=f"pan_{p['id']}"):
                         p["in_project_pan"] = not is_pan
@@ -357,6 +402,20 @@ else:
                     st.markdown(f'<div class="metric-box"><div class="metric-value">{total_uses}</div><div class="metric-label">Uses</div></div>', unsafe_allow_html=True)
                 with m3:
                     st.markdown(f'<div class="metric-box"><div class="metric-value">{cpu:.2f} {p["currency"]}</div><div class="metric-label">Cost / Use</div></div>', unsafe_allow_html=True)
+
+                # Kalkulator przewidywanego czasu zużycia
+                st.markdown("<br>", unsafe_allow_html=True)
+                daily_uses_input = st.number_input("Estimated daily applications:", min_value=0.5, max_value=10.0, value=1.0, step=0.5, key=f"d_uses_{p['id']}")
+                
+                if p.get("capacity", 0) > 0:
+                    d_needed, target_date = estimate_pan_completion(p["category"], p["capacity"], p["unit"], daily_uses_input)
+                    if d_needed:
+                        formatted_date = target_date.strftime("%B %Y")
+                        st.markdown(f"""
+                        <div style="background-color: #f2ebfc; border-radius: 6px; padding: 0.8rem; margin-top: 10px; font-size: 0.88rem; color: #4a3468;">
+                            🔮 <strong>Timeline Forecast:</strong> Approx. <b>{d_needed} days</b> ({formatted_date}) to finish {p['capacity']} {p['unit']} at {daily_uses_input} uses/day.
+                        </div>
+                        """, unsafe_allow_html=True)
 
                 st.markdown("<br>", unsafe_allow_html=True)
                 col_add, col_btn = st.columns([2, 1])
@@ -446,3 +505,5 @@ else:
                     st.rerun()
                 else:
                     st.error("Please fill in Name and Brand.")
+     
+
