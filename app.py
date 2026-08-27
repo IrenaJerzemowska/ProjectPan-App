@@ -135,11 +135,11 @@ DATA_FILE = "vanity_data.json"
 CATEGORIES = [
     "foundation", "concealer", "powder", "contour", "blush", 
     "highlighter", "eyeshadow palette", "lip gloss", "lipstick", 
-    "eyeliner", "mascara", "lip liner", "lip mask", 
+    "eyeliner", "mascara", "lip liner", "lip mask", "lip balm",
     "setting spray", "brow gel", "brow pen"
 ]
 
-LIP_CATEGORIES = ["lip gloss", "lipstick", "lip liner", "lip mask"]
+LIP_CATEGORIES = ["lip gloss", "lipstick", "lip liner", "lip mask", "lip balm"]
 
 def load_data():
     if os.path.exists(DATA_FILE):
