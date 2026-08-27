@@ -8,7 +8,7 @@ from PIL import Image
 import io
 
 # ---------------------------------------------------------
-# Konfiguracja Strony i CSS
+# Page Configuration & Pure CSS Styling
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="Vanity Sanctuary",
@@ -21,13 +21,13 @@ st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
 
-    /* Tło aplikacji */
+    /* Tło całej aplikacji */
     .stApp {
         background-color: #d8cde9 !important;
         font-family: 'Lora', serif;
     }
 
-    /* Kontener centralny */
+    /* Szerokość centralnego kontenera */
     .main .block-container {
         max-width: 440px !important;
         padding-top: 1.5rem !important;
@@ -36,7 +36,7 @@ st.markdown("""
         padding-right: 1rem !important;
     }
 
-    /* Górny nagłówek */
+    /* Górny Nagłówek */
     .sanctuary-header {
         background: #ffffff;
         border-radius: 4px;
@@ -68,43 +68,50 @@ st.markdown("""
         margin-bottom: 14px !important;
     }
 
-    /* PRZEKSZTAŁCENIE NATYWNYCH PRZYCISKÓW W KAFELKI Z OBRAZKA */
+    /* WYMUSZENIE WIELKICH DUŻYCH KWADRATÓW DLA ZWYKŁYCH BUTTONÓW */
     div[data-testid="column"] button {
         background-color: #ffffff !important;
         border: 1px solid #e2d8ee !important;
         border-radius: 4px !important;
         width: 100% !important;
-        height: auto !important;
-        aspect-ratio: 1 / 1 !important; /* Idealny kwadrat */
+        height: 180px !important; /* Sztywna wysokość tworzy z nich duże kwadraty */
+        min-height: 180px !important;
         display: flex !important;
         flex-direction: column !important;
         justify-content: center !important;
         align-items: center !important;
         box-shadow: 0 4px 12px rgba(100, 80, 130, 0.06) !important;
-        white-space: pre-wrap !important; /* Pozwala na nową linię w tekście */
-        color: #554a60 !important;
         transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-        padding: 10px !important;
+        padding: 15px 5px !important;
+        margin: 0 !important;
     }
 
     div[data-testid="column"] button:hover {
         transform: translateY(-2px) !important;
-        box-shadow: 0 6px 15px rgba(100, 80, 130, 0.12) !important;
-        border-color: #cbbba6 !important;
+        box-shadow: 0 6px 16px rgba(100, 80, 130, 0.12) !important;
+        background-color: #ffffff !important;
     }
 
-    /* Stylizacja tekstu i wielkości emotek wewnątrz przycisku */
-    div[data-testid="column"] button p {
+    /* Tekst nagłówka wewnątrz kafelka */
+    .tile-text {
         font-family: 'Playfair Display', serif !important;
         font-size: 1.35rem !important;
         font-weight: 700 !important;
-        line-height: 1.3 !important;
+        line-height: 1.25 !important;
         color: #554a60 !important;
-        margin: 0 !important;
         text-align: center !important;
+        margin-bottom: 0.8rem !important;
+        display: block !important;
     }
 
-    /* Dolna karta z ramką */
+    /* DUŻA EMOTKA W ŚRODKU KAFELKA */
+    .tile-emoji {
+        font-size: 3.5rem !important;
+        line-height: 1 !important;
+        display: block !important;
+    }
+
+    /* Dolna karta z cytatem */
     .quote-card {
         background: #ffffff;
         border: 2px solid #3a3342 !important;
@@ -121,11 +128,20 @@ st.markdown("""
         margin: 0;
         line-height: 1.4;
     }
+
+    /* Inner Pages */
+    .vanity-card {
+        background: #ffffff;
+        border-radius: 4px;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 3px 10px rgba(130, 110, 160, 0.05);
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# Baza Danych i Stan Strony
+# Data Storage & State Initialization
 # ---------------------------------------------------------
 DATA_FILE = "vanity_data.json"
 
@@ -168,7 +184,7 @@ def calculate_cost_per_use(price, total_uses):
     return price if total_uses <= 0 else price / total_uses
 
 # ---------------------------------------------------------
-# Nagłówek
+# Header Block
 # ---------------------------------------------------------
 st.markdown("""
 <div class="sanctuary-header">
@@ -178,11 +194,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# STRONA GŁÓWNA: CZYSTE PRZYCISKI
+# HOME PAGE (DUŻE, CZYSTE KWADRATOWE KAFELKI)
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
 
-    # Rząd 1
+    # Row 1
     col1, col2 = st.columns(2)
     with col1:
         if st.button("Your\nCollection\n\n🦇", key="btn_coll"):
@@ -194,7 +210,7 @@ if st.session_state.current_page == "Home":
             st.session_state.current_page = "Project Pan"
             st.rerun()
 
-    # Rząd 2
+    # Row 2
     col3, col4 = st.columns(2)
     with col3:
         if st.button("No - Buy\n& Rewards\n\n🌸", key="btn_nobuy"):
@@ -206,7 +222,7 @@ if st.session_state.current_page == "Home":
             st.session_state.current_page = "Analytics"
             st.rerun()
 
-    # Cytat na dole
+    # Quote Box
     st.markdown("""
     <div class="quote-card">
         <p>Use what you love.<br>Finish what you start.</p>
@@ -214,7 +230,7 @@ if st.session_state.current_page == "Home":
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# STRONY WEWNĘTRZNE
+# INNER PAGES
 # ---------------------------------------------------------
 else:
     if st.button("← Back to Menu"):
@@ -238,13 +254,11 @@ else:
 
             for p in reversed(filtered_products):
                 days = calculate_days_owned(p["purchase_date"])
-                cpu = calculate_cost_per_use(p["price"], p.get("total_uses", 0))
-
                 st.markdown(f"""
-                <div style="background:#fff; padding:1rem; border-radius:4px; margin-bottom:1rem;">
+                <div class="vanity-card">
                     <h4>{p['brand']} — {p['name']}</h4>
                     <p>Category: {p['category']} | Shade: {p['shade']}</p>
-                    <p>Price: {p['price']:.2f} {p['currency']} | Days: {days} | Uses: {p.get('total_uses', 0)}</p>
+                    <p>Price: {p['price']:.2f} {p['currency']} | Days: {days}</p>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -260,11 +274,11 @@ else:
     elif st.session_state.current_page == "No-Buy Rules":
         st.markdown("### No - Buy & Rewards")
         stats = st.session_state.db.get("stats", {})
-        st.write(f"Finished items: {stats.get('finished_lip_products', 0)}")
+        st.write(f"Finished lip items: {stats.get('finished_lip_products', 0)}")
 
     elif st.session_state.current_page == "Analytics":
         st.markdown("### Beauty Stats")
-        st.write("Statistics page.")
+        st.write("Statistics overview.")
 
     elif st.session_state.current_page == "Add Product":
         st.markdown("### Add Product")
