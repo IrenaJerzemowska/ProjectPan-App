@@ -5,7 +5,7 @@ import os
 import json
 
 # ---------------------------------------------------------
-# Page Configuration & Navigation
+# Konfiguracja Strony i Nawigacja
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="Vanity Sanctuary",
@@ -14,7 +14,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Obsługa nawigacji po kliknięciu w kwadrat
+# Obsługa kliknięć z adresu URL
 query_params = st.query_params
 if "page" in query_params:
     st.session_state.current_page = query_params["page"]
@@ -25,7 +25,7 @@ if "current_page" not in st.session_state:
     st.session_state.current_page = "Home"
 
 # ---------------------------------------------------------
-# Global Styles (Tło i Ramki)
+# Globalne Style CSS
 # ---------------------------------------------------------
 st.markdown("""
 <style>
@@ -89,7 +89,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# Header Block
+# Nagłówek
 # ---------------------------------------------------------
 st.markdown("""
 <div class="sanctuary-header">
@@ -99,11 +99,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# HOME PAGE (DUŻE, DUŻE KWADRATY I DUŻE EMOTKI)
+# STRONA GŁÓWNA: KAFELKI
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
 
-    # Czysty HTML/CSS komponentu kafelków
     grid_html = """
     <!DOCTYPE html>
     <html>
@@ -129,7 +128,7 @@ if st.session_state.current_page == "Home":
             background-color: #ffffff;
             border: 1px solid #e2d8ee;
             border-radius: 4px;
-            height: 180px; /* Sztywna duża wysokość */
+            height: 175px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -158,7 +157,7 @@ if st.session_state.current_page == "Home":
         }
 
         .tile-emoji {
-            font-size: 4rem; /* DUŻA EMOTKA */
+            font-size: 3.8rem;
             line-height: 1;
             margin-bottom: 2px;
         }
@@ -189,9 +188,8 @@ if st.session_state.current_page == "Home":
     </html>
     """
 
-    st.components.v1.html(grid_html, height=385)
+    st.components.v1.html(grid_html, height=380)
 
-    # Dolny cytat
     st.markdown("""
     <div class="quote-card">
         <p>Use what you love.<br>Finish what you start.</p>
@@ -199,7 +197,7 @@ if st.session_state.current_page == "Home":
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# INNER PAGES
+# STRONY WEWNĘTRZNE
 # ---------------------------------------------------------
 else:
     if st.button("← Back to Menu"):
