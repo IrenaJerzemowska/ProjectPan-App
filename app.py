@@ -655,12 +655,7 @@ else:
         with col1:
             st.markdown(f'<div class="metric-box"><div class="metric-value">{total_items}</div><div class="metric-label">Active Items</div></div>', unsafe_allow_html=True)
         with col2:
-            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_empties}</div><div class="metric-label">Empties</div></div>', unsafe_allow_html=True)
-
+            st.markdown(f'<div class="metric-box"><div class="metric-value">{total_empties}</div><div class="metric-label">Empties (Graveyard)</div></div>', unsafe_allow_html=True)
+        
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown(f"""
-        <div class="vanity-card">
-            <h4 style="margin:0 0 0.5rem 0; font-family:'Playfair Display', serif;">Collection Overview</h4>
-            <p style="margin:0; font-size:0.95rem;">Total Estimated Value: <b>{total_spent:.2f}</b></p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-box"><div class="metric-value">{total_spent:.2f}</div><div class="metric-label">Total Value of Active Inventory</div></div>', unsafe_allow_html=True)
