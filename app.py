@@ -23,24 +23,33 @@ st.markdown("""
 
     /* Clean Solid Lilac Background */
     .stApp {
-        background-color: #dcd0f0 !important;
+        background-color: #d8cde9 !important;
         color: #382a4b;
         font-family: 'Lora', serif;
+    }
+
+    /* Container Constrain to Match Image Aspect Ratio */
+    .block-container {
+        max-width: 480px !important;
+        padding-top: 1.5rem !important;
+        padding-bottom: 2rem !important;
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
     }
 
     /* Header Styling */
     .sanctuary-header {
         background: #ffffff;
-        border-radius: 4px;
-        padding: 2.2rem 1rem;
+        border-radius: 2px;
+        padding: 1.8rem 1rem 1.4rem 1rem;
         text-align: center;
-        margin-bottom: 1.8rem;
-        box-shadow: 0 4px 15px rgba(120, 100, 150, 0.05);
+        margin-bottom: 12px;
+        box-shadow: 0 4px 15px rgba(120, 100, 150, 0.04);
     }
 
     .sanctuary-header h1 {
         font-family: 'Playfair Display', serif !important;
-        font-size: 2.5rem !important;
+        font-size: 2.2rem !important;
         color: #3a3342 !important;
         margin: 0 !important;
         font-weight: 700 !important;
@@ -49,7 +58,7 @@ st.markdown("""
 
     .sanctuary-header p {
         color: #b5a4c9;
-        font-size: 1.25rem;
+        font-size: 1.15rem;
         font-family: 'Playfair Display', serif;
         font-style: italic;
         margin-top: 0.3rem;
@@ -57,79 +66,92 @@ st.markdown("""
         font-weight: 400;
     }
 
-    /* Uniform Grid Tile Buttons */
+    /* Perfect Square Grid Tile Buttons */
     div[data-testid="column"] .stButton > button {
         background: #ffffff !important;
-        border: 2px solid #ffffff !important;
-        border-radius: 4px !important;
+        border: 1.5px solid #ffffff !important;
+        border-radius: 2px !important;
         color: #4a4253 !important;
         font-family: 'Playfair Display', serif !important;
-        font-size: 1.35rem !important;
+        font-size: 1.25rem !important;
         font-weight: 700 !important;
-        height: 180px !important;
+        aspect-ratio: 1 / 1 !important;
+        height: auto !important;
         width: 100% !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        box-shadow: 0 4px 12px rgba(130, 110, 160, 0.06) !important;
+        box-shadow: 0 3px 10px rgba(130, 110, 160, 0.05) !important;
         transition: transform 0.15s ease-in-out !important;
         white-space: pre-wrap !important;
-        line-height: 1.2 !important;
+        line-height: 1.25 !important;
+        padding: 0.5rem !important;
+        margin: 0 !important;
     }
 
     div[data-testid="column"] .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(110, 90, 140, 0.12) !important;
+        box-shadow: 0 6px 14px rgba(110, 90, 140, 0.1) !important;
+    }
+
+    /* Column spacing override for tight grid */
+    div[data-testid="column"] {
+        padding: 0 4px !important;
+    }
+    
+    div[data-testid="stHorizontalBlock"] {
+        gap: 0px !important;
+        margin-bottom: 8px !important;
     }
 
     /* Bottom Quote Card */
     .quote-card {
         background: #ffffff;
-        border: 2px solid #4a4253;
+        border: 1.5px solid #4a4253;
         border-radius: 2px;
-        padding: 2.5rem 1.5rem;
+        padding: 2.2rem 1rem;
         text-align: center;
-        margin-top: 1.5rem;
+        margin-top: 12px;
     }
 
     .quote-card p {
         font-family: 'Lora', serif;
         color: #5c5366;
-        font-size: 1.35rem;
+        font-size: 1.25rem;
         margin: 0;
-        line-height: 1.5;
+        line-height: 1.45;
         letter-spacing: 0.2px;
     }
 
     /* Inner Cards */
     .vanity-card {
         background: #ffffff;
-        border-radius: 6px;
-        padding: 1.5rem;
-        margin-bottom: 1.2rem;
-        box-shadow: 0 4px 12px rgba(130, 110, 160, 0.05);
+        border-radius: 4px;
+        padding: 1.2rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 3px 10px rgba(130, 110, 160, 0.05);
     }
 
     .metric-box {
         background: #f7f3fd;
         border: 1px solid #dcd0f0;
-        padding: 1rem;
-        border-radius: 6px;
+        padding: 0.8rem;
+        border-radius: 4px;
         text-align: center;
     }
     .metric-box .metric-value {
-        font-size: 1.6rem;
+        font-size: 1.4rem;
         font-weight: 600;
         color: #4a3468;
         font-family: 'Playfair Display', serif;
     }
     .metric-box .metric-label {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         color: #8c7aa9;
         text-transform: uppercase;
         letter-spacing: 1px;
-        margin-top: 4px;
+        margin-top: 2px;
     }
 
     /* Inputs Fix */
@@ -204,21 +226,15 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# PAGE 1: HOME (Symmetrical 2x2 Grid)
+# PAGE 1: HOME (Symmetrical Square Grid)
 # ---------------------------------------------------------
 if st.session_state.current_page == "Home":
 
-    col1, col2 = st.columns(2, gap="small")
-
+    # Row 1
+    col1, col2 = st.columns(2)
     with col1:
         if st.button("Your\nCollection\n\n🦇", key="btn_coll"):
             st.session_state.current_page = "Collection"
-            st.rerun()
-
-        st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
-
-        if st.button("No - Buy\n& Rewards\n\n🌸", key="btn_nobuy"):
-            st.session_state.current_page = "No-Buy Rules"
             st.rerun()
 
     with col2:
@@ -226,8 +242,14 @@ if st.session_state.current_page == "Home":
             st.session_state.current_page = "Project Pan"
             st.rerun()
 
-        st.markdown("<div style='margin-top:12px;'></div>", unsafe_allow_html=True)
+    # Row 2
+    col3, col4 = st.columns(2)
+    with col3:
+        if st.button("No - Buy\n& Rewards\n\n🌸", key="btn_nobuy"):
+            st.session_state.current_page = "No-Buy Rules"
+            st.rerun()
 
+    with col4:
         if st.button("Beauty\nstats\n\n🐈‍⬛", key="btn_stats"):
             st.session_state.current_page = "Analytics"
             st.rerun()
