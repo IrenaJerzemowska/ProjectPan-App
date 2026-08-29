@@ -166,6 +166,7 @@ def load_cloud_data():
 
     stats_data = stats_res.data[0] if stats_res and stats_res.data else {}
     stats = {
+        "id": stats_data.get("id", 1),
         "finished_lip_products": stats_data.get("finished_lip_products", 0),
         "no_buy_start_date": stats_data.get(
             "no_buy_start_date", str(datetime.date.today())
@@ -185,6 +186,7 @@ def load_cloud_data():
         "wishlist": [],
         "empties": [],
         "stats": {
+            "id": 1,
             "finished_lip_products": 0,
             "no_buy_start_date": str(datetime.date.today()),
             "xp": 0,
@@ -430,6 +432,7 @@ else:
             if st.button("+ Log Use", key=f"quick_use_{p['id']}"):
               p["total_uses"] = p.get("total_uses", 0) + 1
               p["last_used_timestamp"] = datetime.datetime.now().isoformat()
+              stats_id = st.session_state.db["stats"].get("id", 1)
               new_xp = max(st.session_state.db["stats"].get("xp", 0) + 5, 0)
               st.session_state.db["stats"]["xp"] = new_xp
 
@@ -438,7 +441,7 @@ else:
                   "last_used_timestamp": p["last_used_timestamp"],
               }).eq("id", p["id"]).execute()
               conn.table("stats").update({"xp": new_xp}).eq(
-                  "id", 1
+                  "id", stats_id
               ).execute()
               st.rerun()
 
@@ -487,6 +490,7 @@ else:
             with rc2:
               cancel_review = st.form_submit_button("Cancel")
 
+            stats_id = st.session_state.db["stats"].get("id", 1)
             if submit_review:
               is_lip = p["category"].lower() in LIP_CATEGORIES
               fin_lips = st.session_state.db["stats"].get(
@@ -521,7 +525,7 @@ else:
               conn.table("stats").update({
                   "finished_lip_products": fin_lips,
                   "xp": new_xp,
-              }).execute()
+              }).eq("id", stats_id).execute()
 
               st.session_state[finishing_id_key] = None
               st.session_state.db = load_cloud_data()
@@ -577,7 +581,8 @@ else:
                   "total_uses": int(new_uses_input),
               }).eq("id", p["id"]).execute()
 
-           conn.table("stats").update({"xp": new_xp}).eq("user_id", current_user_id).execute()
+              stats_id = st.session_state.db["stats"].get("id", 1)
+              conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
 
               st.session_state[edit_mode_key] = False
               st.session_state.db = load_cloud_data()
@@ -625,7 +630,8 @@ else:
           if int(initial_uses) > 0:
             current_xp = st.session_state.db["stats"].get("xp", 0)
             new_xp = max(current_xp + (int(initial_uses) * 5), 0)
-            conn.table("stats").update({"xp": new_xp}).execute()
+            stats_id = st.session_state.db["stats"].get("id", 1)
+            conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
 
           st.success("Product added!")
           st.session_state.db = load_cloud_data()
@@ -765,11 +771,12 @@ else:
               p["total_uses"] = p.get("total_uses", 0) - 1
               current_xp = st.session_state.db["stats"].get("xp", 0)
               new_xp = max(current_xp - 5, 0)
+              stats_id = st.session_state.db["stats"].get("id", 1)
 
               conn.table("products").update(
                   {"total_uses": p["total_uses"]}
               ).eq("id", p["id"]).execute()
-              conn.table("stats").update({"xp": new_xp}).execute()
+              conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
               st.session_state.db = load_cloud_data()
               st.rerun()
         with col_uses_disp:
@@ -784,12 +791,13 @@ else:
             p["last_used_timestamp"] = datetime.datetime.now().isoformat()
             current_xp = st.session_state.db["stats"].get("xp", 0)
             new_xp = max(current_xp + 5, 0)
+            stats_id = st.session_state.db["stats"].get("id", 1)
 
             conn.table("products").update({
                 "total_uses": p["total_uses"],
                 "last_used_timestamp": p["last_used_timestamp"],
             }).eq("id", p["id"]).execute()
-            conn.table("stats").update({"xp": new_xp}).execute()
+            conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
             st.session_state.db = load_cloud_data()
             st.rerun()
 
@@ -888,9 +896,10 @@ else:
           "Set or adjust No-Buy start date:", value=parsed_start_date
       )
       if st.form_submit_button("Update Start Date ✓"):
+        stats_id = stats.get("id", 1)
         conn.table("stats").update(
             {"no_buy_start_date": str(new_start_date)}
-        ).execute()
+        ).eq("id", stats_id).execute()
         st.success("No-buy start date updated successfully!")
         st.session_state.db = load_cloud_data()
         st.rerun()
@@ -899,10 +908,11 @@ else:
 
     if st.button("🚨 Oops, I bought something (Reset Streak & -50 XP)"):
       new_xp = max(stats.get("xp", 0) - 50, 0)
+      stats_id = stats.get("id", 1)
       conn.table("stats").update({
           "no_buy_start_date": str(datetime.date.today()),
           "xp": new_xp,
-      }).execute()
+      }).eq("id", stats_id).execute()
       st.session_state.db = load_cloud_data()
       st.warning("Streak reset. Dust yourself off and try again! 🌱")
       st.rerun()
