@@ -1,12 +1,8 @@
 import streamlit as st
 import pandas as pd
 import datetime
-import os
-import json
-import base64
-from PIL import Image
-import io
 import random
+from st_supabase_connection import SupabaseConnection
 
 # ---------------------------------------------------------
 # Page Configuration & Clean Aesthetic Theme
@@ -123,9 +119,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# Data Storage & State Initialization
+# Supabase Cloud Connection Initialization
 # ---------------------------------------------------------
-DATA_FILE = "vanity_data.json"
+conn = st.connection("supabase", type=SupabaseConnection)
 
 CATEGORIES = [
     "foundation", "concealer", "powder", "powder contour", "cream contour", 
@@ -137,31 +133,35 @@ CATEGORIES = [
 
 LIP_CATEGORIES = ["lip gloss", "lipstick", "lip liner", "lip mask", "lip balm"]
 
-def load_data():
-    if os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                if "products" not in data: data["products"] = []
-                if "wishlist" not in data: data["wishlist"] = []
-                if "empties" not in data: data["empties"] = []
-                if "stats" not in data: 
-                    data["stats"] = {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0, "rewards_redeemed": 0}
-                if "no_buy_start_date" not in data["stats"]: data["stats"]["no_buy_start_date"] = str(datetime.date.today())
-                if "xp" not in data["stats"]: data["stats"]["xp"] = 0
-                if "finished_lip_products" not in data["stats"]: data["stats"]["finished_lip_products"] = 0
-                if "rewards_redeemed" not in data["stats"]: data["stats"]["rewards_redeemed"] = 0
-                return data
-        except Exception:
-            return {"products": [], "wishlist": [], "empties": [], "stats": {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0, "rewards_redeemed": 0}}
-    return {"products": [], "wishlist": [], "empties": [], "stats": {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0, "rewards_redeemed": 0}}
+def load_cloud_data():
+    try:
+        products_res = conn.table("products").select("*").execute()
+        wishlist_res = conn.table("wishlist").select("*").execute()
+        empties_res = conn.table("empties").select("*").execute()
+        stats_res = conn.table("stats").select("*").execute()
 
-def save_data(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4)
+        products = products_res.data if products_res and products_res.data else []
+        wishlist = wishlist_res.data if wishlist_res and wishlist_res.data else []
+        empties = empties_res.data if empties_res and empties_res.data else []
+        
+        stats_data = stats_res.data[0] if stats_res and stats_res.data else {}
+        stats = {
+            "finished_lip_products": stats_data.get("finished_lip_products", 0),
+            "no_buy_start_date": stats_data.get("no_buy_start_date", str(datetime.date.today())),
+            "xp": stats_data.get("xp", 0),
+            "rewards_redeemed": stats_data.get("rewards_redeemed", 0)
+        }
+        return {"products": products, "wishlist": wishlist, "empties": empties, "stats": stats}
+    except Exception as e:
+        return {
+            "products": [], 
+            "wishlist": [], 
+            "empties": [], 
+            "stats": {"finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0, "rewards_redeemed": 0}
+        }
 
 if "db" not in st.session_state:
-    st.session_state.db = load_data()
+    st.session_state.db = load_cloud_data()
 
 if "current_page" not in st.session_state:
     st.session_state.current_page = "Home"
@@ -219,7 +219,7 @@ def estimate_pan_completion(category, daily_uses):
 st.markdown("""
 <div class="sanctuary-header">
     <h1>Vanity Sanctuary</h1>
-    <p>Minimalist inventory & project pan</p>
+    <p>Minimalist inventory & project pan (Cloud Synced)</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -259,6 +259,7 @@ if st.session_state.current_page == "Home":
 
 else:
     if st.button("← Back to Menu"):
+        st.session_state.db = load_cloud_data()
         st.session_state.current_page = "Home"
         st.rerun()
 
@@ -268,14 +269,12 @@ else:
     if st.session_state.current_page == "Collection":
         st.markdown("### Your Collection")
         
-        # Calculate category counts dynamically
         products = st.session_state.db.get("products", [])
         cat_counts = {}
         for p in products:
             c = p.get("category", "Uncategorized")
             cat_counts[c] = cat_counts.get(c, 0) + 1
 
-        # Display category counters cleanly
         with st.expander("📊 View Category Counts"):
             count_cols = st.columns(2)
             sorted_cats = sorted(cat_counts.items(), key=lambda x: x[1], reverse=True)
@@ -330,9 +329,11 @@ else:
                         if st.button("+ Log Use", key=f"quick_use_{p['id']}"):
                             p["total_uses"] = p.get("total_uses", 0) + 1
                             p["last_used_timestamp"] = datetime.datetime.now().isoformat()
-                            if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
-                            st.session_state.db["stats"]["xp"] = max(st.session_state.db["stats"].get("xp", 0) + 5, 0)
-                            save_data(st.session_state.db)
+                            new_xp = max(st.session_state.db["stats"].get("xp", 0) + 5, 0)
+                            st.session_state.db["stats"]["xp"] = new_xp
+                            
+                            conn.table("products").update({"total_uses": p["total_uses"], "last_used_timestamp": p["last_used_timestamp"]}).eq("id", p["id"]).execute()
+                            conn.table("stats").update({"xp": new_xp}).execute()
                             st.rerun()
 
                 st.markdown("</div>", unsafe_allow_html=True)
@@ -345,7 +346,7 @@ else:
                         p["in_project_pan"] = not is_pan
                         if p["in_project_pan"]:
                             p["last_used_timestamp"] = datetime.datetime.now().isoformat()
-                        save_data(st.session_state.db)
+                        conn.table("products").update({"in_project_pan": p["in_project_pan"]}).eq("id", p["id"]).execute()
                         st.rerun()
                 with c2:
                     if st.button("Edit ✏️", key=f"edit_toggle_{p['id']}"):
@@ -357,8 +358,8 @@ else:
                         st.rerun()
                 with c4:
                     if st.button("Delete 🗑️", key=f"del_{p['id']}"):
-                        st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
-                        save_data(st.session_state.db)
+                        conn.table("products").delete().eq("id", p["id"]).execute()
+                        st.session_state.db = load_cloud_data()
                         st.rerun()
 
                 if st.session_state.get(finishing_id_key) == p["id"]:
@@ -372,22 +373,31 @@ else:
                         
                         if submit_review:
                             is_lip = p["category"].lower() in LIP_CATEGORIES
-                            if is_lip:
-                                st.session_state.db["stats"]["finished_lip_products"] = st.session_state.db["stats"].get("finished_lip_products", 0) + 1
+                            fin_lips = st.session_state.db["stats"].get("finished_lip_products", 0) + (1 if is_lip else 0)
+                            new_xp = max(st.session_state.db["stats"].get("xp", 0) + 50, 0)
                             
-                            empty_item = p.copy()
-                            empty_item["finished_date"] = str(datetime.date.today())
-                            empty_item["final_days_owned"] = calculate_days_owned(p["purchase_date"])
-                            empty_item["final_cpu"] = calculate_cost_per_use(p["price"], p.get("total_uses", 0))
-                            empty_item["rating"] = finish_rating
-                            empty_item["review"] = finish_review
+                            empty_item = {
+                                "id": p["id"],
+                                "brand": p["brand"],
+                                "shade": p["shade"],
+                                "category": p["category"],
+                                "price": p["price"],
+                                "currency": p["currency"],
+                                "purchase_date": p["purchase_date"],
+                                "total_uses": p.get("total_uses", 0),
+                                "finished_date": str(datetime.date.today()),
+                                "final_days_owned": calculate_days_owned(p["purchase_date"]),
+                                "final_cpu": calculate_cost_per_use(p["price"], p.get("total_uses", 0)),
+                                "rating": finish_rating,
+                                "review": finish_review
+                            }
                             
-                            if "empties" not in st.session_state.db: st.session_state.db["empties"] = []
-                            st.session_state.db["empties"].append(empty_item)
-                            st.session_state.db["stats"]["xp"] = max(st.session_state.db["stats"].get("xp", 0) + 50, 0)
-                            st.session_state.db["products"] = [item for item in st.session_state.db["products"] if item["id"] != p["id"]]
+                            conn.table("empties").insert(empty_item).execute()
+                            conn.table("products").delete().eq("id", p["id"]).execute()
+                            conn.table("stats").update({"finished_lip_products": fin_lips, "xp": new_xp}).execute()
+                            
                             st.session_state[finishing_id_key] = None
-                            save_data(st.session_state.db)
+                            st.session_state.db = load_cloud_data()
                             st.rerun()
                         if cancel_review:
                             st.session_state[finishing_id_key] = None
@@ -406,20 +416,22 @@ else:
 
                         if st.form_submit_button("Save Changes ✓"):
                             uses_diff = int(new_uses_input) - int(old_uses)
-                            p["brand"] = new_brand
-                            p["shade"] = new_shade if new_shade else "N/A"
-                            p["category"] = new_category
-                            p["price"] = float(new_price)
-                            p["currency"] = new_currency
-                            p["total_uses"] = int(new_uses_input)
+                            current_xp = st.session_state.db["stats"].get("xp", 0)
+                            new_xp = max(current_xp + (uses_diff * 5), 0)
                             
-                            if uses_diff != 0:
-                                if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
-                                current_xp = st.session_state.db["stats"].get("xp", 0)
-                                st.session_state.db["stats"]["xp"] = max(current_xp + (uses_diff * 5), 0)
-
-                            save_data(st.session_state.db)
+                            conn.table("products").update({
+                                "brand": new_brand,
+                                "shade": new_shade if new_shade else "N/A",
+                                "category": new_category,
+                                "price": float(new_price),
+                                "currency": new_currency,
+                                "total_uses": int(new_uses_input)
+                            }).eq("id", p["id"]).execute()
+                            
+                            conn.table("stats").update({"xp": new_xp}).execute()
+                            
                             st.session_state[edit_mode_key] = False
+                            st.session_state.db = load_cloud_data()
                             st.rerun()
                 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -455,15 +467,15 @@ else:
                         "last_used_timestamp": datetime.datetime.now().isoformat() if int(initial_uses) > 0 else "1970-01-01T00:00:00",
                         "in_project_pan": False
                     }
-                    st.session_state.db["products"].append(new_item)
+                    conn.table("products").insert(new_item).execute()
                     
                     if int(initial_uses) > 0:
-                        if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
                         current_xp = st.session_state.db["stats"].get("xp", 0)
-                        st.session_state.db["stats"]["xp"] = max(current_xp + (int(initial_uses) * 5), 0)
+                        new_xp = max(current_xp + (int(initial_uses) * 5), 0)
+                        conn.table("stats").update({"xp": new_xp}).execute()
 
-                    save_data(st.session_state.db)
                     st.success("Product added!")
+                    st.session_state.db = load_cloud_data()
                     st.session_state.current_page = "Collection"
                     st.rerun()
 
@@ -483,8 +495,8 @@ else:
                 </div>
                 """, unsafe_allow_html=True)
                 if st.button("Delete from Graveyard 🗑️", key=f"del_empty_{e['id']}"):
-                    st.session_state.db["empties"] = [item for item in st.session_state.db["empties"] if item["id"] != e["id"]]
-                    save_data(st.session_state.db)
+                    conn.table("empties").delete().eq("id", e["id"]).execute()
+                    st.session_state.db = load_cloud_data()
                     st.rerun()
 
     # --- PROJECT PAN ---
@@ -497,7 +509,7 @@ else:
         st.markdown(f"""
         <div class="vanity-card" style="background-color: #f7f3fd; text-align: center;">
             <h4 style="margin:0; font-family:'Playfair Display', serif; color:#4a3468;">Rank: {current_level_title}</h4>
-            <p style="margin:5px 0 0 0; font-size: 0.9rem; color:#8c7aa9;">Total XP: <b>{current_xp} XP</b> (+5 XP per added use, -5 XP per removed use!)</p>
+            <p style="margin:5px 0 0 0; font-size: 0.9rem; color:#8c7aa9;">Total XP: <b>{current_xp} XP</b></p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -543,10 +555,12 @@ else:
                     if st.button("➖ -1", key=f"minus_{p['id']}"):
                         if p.get("total_uses", 0) > 0:
                             p["total_uses"] = p.get("total_uses", 0) - 1
-                            if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
                             current_xp = st.session_state.db["stats"].get("xp", 0)
-                            st.session_state.db["stats"]["xp"] = max(current_xp - 5, 0)
-                            save_data(st.session_state.db)
+                            new_xp = max(current_xp - 5, 0)
+                            
+                            conn.table("products").update({"total_uses": p["total_uses"]}).eq("id", p["id"]).execute()
+                            conn.table("stats").update({"xp": new_xp}).execute()
+                            st.session_state.db = load_cloud_data()
                             st.rerun()
                 with col_uses_disp:
                     st.markdown(f"<div style='text-align: center; padding-top: 5px; font-weight: bold;'>{total_uses} uses</div>", unsafe_allow_html=True)
@@ -554,10 +568,12 @@ else:
                     if st.button("➕ +1", key=f"plus_{p['id']}"):
                         p["total_uses"] = p.get("total_uses", 0) + 1
                         p["last_used_timestamp"] = datetime.datetime.now().isoformat()
-                        if "stats" not in st.session_state.db: st.session_state.db["stats"] = {"xp": 0}
                         current_xp = st.session_state.db["stats"].get("xp", 0)
-                        st.session_state.db["stats"]["xp"] = max(current_xp + 5, 0)
-                        save_data(st.session_state.db)
+                        new_xp = max(current_xp + 5, 0)
+                        
+                        conn.table("products").update({"total_uses": p["total_uses"], "last_used_timestamp": p["last_used_timestamp"]}).eq("id", p["id"]).execute()
+                        conn.table("stats").update({"xp": new_xp}).execute()
+                        st.session_state.db = load_cloud_data()
                         st.rerun()
 
                 st.markdown("</div>", unsafe_allow_html=True)
@@ -578,17 +594,17 @@ else:
                 if not w_brand:
                     st.error("Please enter a brand.")
                 else:
-                    if "wishlist" not in st.session_state.db: st.session_state.db["wishlist"] = []
-                    st.session_state.db["wishlist"].append({
+                    new_w = {
                         "id": str(random.randint(100000, 999999)),
                         "brand": w_brand,
                         "item": w_item,
                         "price": float(w_price),
                         "currency": w_currency,
                         "notes": w_notes
-                    })
-                    save_data(st.session_state.db)
+                    }
+                    conn.table("wishlist").insert(new_w).execute()
                     st.success("Added to wishlist!")
+                    st.session_state.db = load_cloud_data()
                     st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
@@ -605,8 +621,8 @@ else:
                 </div>
                 """, unsafe_allow_html=True)
                 if st.button("Remove 🗑️", key=f"del_wish_{w['id']}"):
-                    st.session_state.db["wishlist"] = [item for item in st.session_state.db["wishlist"] if item["id"] != w["id"]]
-                    save_data(st.session_state.db)
+                    conn.table("wishlist").delete().eq("id", w["id"]).execute()
+                    st.session_state.db = load_cloud_data()
                     st.rerun()
 
     # --- NO-BUY & REWARDS ---
@@ -635,26 +651,28 @@ else:
         with st.form("no_buy_date_form"):
             new_start_date = st.date_input("Set or adjust No-Buy start date:", value=parsed_start_date)
             if st.form_submit_button("Update Start Date ✓"):
-                st.session_state.db["stats"]["no_buy_start_date"] = str(new_start_date)
-                save_data(st.session_state.db)
+                conn.table("stats").update({"no_buy_start_date": str(new_start_date)}).execute()
                 st.success("No-buy start date updated successfully!")
+                st.session_state.db = load_cloud_data()
                 st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
 
         if st.button("🚨 Oops, I bought something (Reset Streak & -50 XP)"):
-            st.session_state.db["stats"]["no_buy_start_date"] = str(datetime.date.today())
-            current_xp_val = st.session_state.db["stats"].get("xp", 0)
-            st.session_state.db["stats"]["xp"] = max(current_xp_val - 50, 0)
-            save_data(st.session_state.db)
+            new_xp = max(stats.get("xp", 0) - 50, 0)
+            conn.table("stats").update({
+                "no_buy_start_date": str(datetime.date.today()),
+                "xp": new_xp
+            }).execute()
             st.warning("No-buy streak reset to today, and -50 XP penalty applied.")
+            st.session_state.db = load_cloud_data()
             st.rerun()
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(f"""
         <div class="vanity-card" style="background-color: #f7f3fd;">
             <h4 style="margin:0 0 0.5rem 0; font-family:'Playfair Display', serif;">Lip Product Empties Reward System</h4>
-            <p style="margin:0 0 0.4rem 0; font-size:0.9rem;">Finish <b>5 lip products</b> (lip gloss, lipstick, lip liner, lip mask, or lip balm) = Unlock 1 reward!</p>
+            <p style="margin:0 0 0.4rem 0; font-size:0.9rem;">Finish <b>5 lip products</b> = Unlock 1 reward!</p>
             <p style="margin:0; font-size:0.95rem;">Progress: <b>{finished_lips % 5} / 5</b> toward next reward (Total finished lips: {finished_lips})</p>
             <p style="margin:5px 0 0 0; font-size:0.95rem; color:#4a3468;"><b>Available Rewards to Redeem:</b> {max(available_rewards, 0)}</p>
         </div>
