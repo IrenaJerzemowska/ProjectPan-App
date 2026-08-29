@@ -1,3 +1,8 @@
 streamlit
 pandas
 Pillow
+streamlit
+pandas
+Pillow
+st-supabase-connection
+supabase
