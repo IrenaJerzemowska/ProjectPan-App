@@ -25,6 +25,43 @@ st.markdown(
         font-family: 'Lora', serif;
     }
 
+    # --- ANALYTICS / BEAUTY STATS ---
+  elif st.session_state.current_page == "Analytics":
+    st.markdown("### Beauty Stats & Lip Counter 🐈‍⬛")
+
+    products = st.session_state.db.get("products", [])
+    empties = st.session_state.db.get("empties", [])
+    stats = st.session_state.db.get("stats", {})
+    
+    total_items = len(products)
+    total_spent = sum(p.get("price", 0.0) for p in products)
+    finished_lips = stats.get("finished_lip_products", 0)
+    rewards_redeemed = stats.get("rewards_redeemed", 0)
+    available_rewards = (finished_lips // 5) - rewards_redeemed
+
+    st.markdown(
+        f"""
+        <div class="vanity-card">
+            <h4 style="margin:0 0 0.8rem 0; font-family:'Playfair Display', serif;">Lip Product Completion Milestone</h4>
+            <p style="margin:0 0 0.5rem 0; font-size:1.05rem;">Finished Lip Products: <b>{finished_lips}</b> / 5 for next reward</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        f"""
+        <div class="vanity-card">
+            <h4 style="margin:0 0 0.8rem 0; font-family:'Playfair Display', serif;">Collection Overview</h4>
+            <p style="margin:0 0 0.4rem 0;">Total Active Items: <b>{total_items}</b></p>
+            <p style="margin:0;">Total Estimated Value: <b>{total_spent:.2f}</b></p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    
+
     .block-container {
         max-width: 480px !important;
         padding-top: 1.5rem !important;
