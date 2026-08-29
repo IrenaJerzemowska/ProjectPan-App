@@ -577,7 +577,7 @@ else:
                   "total_uses": int(new_uses_input),
               }).eq("id", p["id"]).execute()
 
-              conn.table("stats").update({"xp": new_xp}).execute()
+              conn.table("stats").update({"xp": new_xp}).eq("id", 1).execute()
 
               st.session_state[edit_mode_key] = False
               st.session_state.db = load_cloud_data()
