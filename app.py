@@ -333,7 +333,7 @@ else:
                             st.session_state.db["stats"]["xp"] = new_xp
                             
                             conn.table("products").update({"total_uses": p["total_uses"], "last_used_timestamp": p["last_used_timestamp"]}).eq("id", p["id"]).execute()
-                            conn.table("stats").update({"xp": new_xp}).execute()
+                            conn.table("stats").update({"xp": new_xp}).eq("id", 1).execute()
                             st.rerun()
 
                 st.markdown("</div>", unsafe_allow_html=True)
