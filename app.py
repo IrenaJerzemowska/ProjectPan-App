@@ -125,11 +125,11 @@ def load_cloud_data():
         empties_res = conn.table("empties").select("*").execute()
         stats_res = conn.table("stats").select("*").execute()
 
-        products = products_res.data if products_res and products_res.data else []
-        wishlist = wishlist_res.data if wishlist_res and wishlist_res.data else []
-        empties = empties_res.data if empties_res and empties_res.data else []
+        products = products_res.data if products_res and hasattr(products_res, 'data') and products_res.data else []
+        wishlist = wishlist_res.data if wishlist_res and hasattr(wishlist_res, 'data') and wishlist_res.data else []
+        empties = empties_res.data if empties_res and hasattr(empties_res, 'data') and empties_res.data else []
 
-        stats_data = stats_res.data[0] if stats_res and stats_res.data else {}
+        stats_data = stats_res.data[0] if stats_res and hasattr(stats_res, 'data') and stats_res.data else {}
         stats = {
             "id": stats_data.get("id", 1),
             "finished_lip_products": stats_data.get("finished_lip_products", 0),
@@ -139,15 +139,16 @@ def load_cloud_data():
             "active_challenge": stats_data.get("active_challenge", None),
         }
         return {"products": products, "wishlist": wishlist, "empties": empties, "stats": stats}
-    except Exception:
+    except Exception as e:
+        st.error(f"Error connecting to database: {e}")
         return {
             "products": [], "wishlist": [], "empties": [],
             "stats": {"id": 1, "finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0, "rewards_redeemed": 0, "active_challenge": None}
         }
 
 
-if "db" not in st.session_state:
-    st.session_state.db = load_cloud_data()
+# Zawsze odświeżamy dane przy załadowaniu strony
+st.session_state.db = load_cloud_data()
 
 if "current_page" not in st.session_state:
     st.session_state.current_page = "Home"
@@ -213,14 +214,33 @@ if st.session_state.current_page == "Home":
 
 else:
     if st.button(t["back_menu"]):
-        st.session_state.db = load_cloud_data()
         st.session_state.current_page = "Home"
         st.rerun()
 
     st.markdown("---")
 
+    # --- COLLECTION ---
+    if st.session_state.current_page == "Collection":
+        st.markdown("### Your Collection")
+        products = st.session_state.db.get("products", [])
+
+        if not products:
+            st.info("Your collection is currently empty or loading...")
+        else:
+            for p in reversed(products):
+                st.markdown(
+                    f"""
+                    <div class="vanity-card">
+                        <h4 style="margin:0 0 0.4rem 0; font-family:'Playfair Display', serif;">{p.get('brand', '')} — <span style="font-weight:400;">{p.get('shade', '')}</span></h4>
+                        <p style="margin:0 0 0.6rem 0; color:#8c7aa9; font-size:0.88rem;">Category: {p.get('category', '')}</p>
+                        <p style="margin:0; font-size:0.9rem;"><strong>Price:</strong> {p.get('price', 0):.2f} {p.get('currency', 'GBP')} | <strong>Uses:</strong> {p.get('total_uses', 0)}</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
     # --- ROULETTE CHALLENGE WITH MONTHLY ROUTINE ---
-    if st.session_state.current_page == "Roulette Challenge":
+    elif st.session_state.current_page == "Roulette Challenge":
         st.markdown(f"### {t['routine_title']}")
         st.write(t["routine_desc"])
 
@@ -230,14 +250,12 @@ else:
             if not products:
                 st.warning("Your collection is empty! Add products first.")
             else:
-                # Pogrupuj po kategoriach i wylosuj po jednym
                 categories = set(p.get("category", "Uncategorized") for p in products)
                 routine = []
                 for cat in categories:
                     cat_prods = [p for p in products if p.get("category") == cat]
                     routine.append(random.choice(cat_prods))
 
-                # Zapisz wyzwanie do sesji / bazy
                 st.session_state.monthly_routine = routine
                 st.success("Selected Routine Challenge generated below!")
 
@@ -247,7 +265,7 @@ else:
                 st.markdown(
                     f"""
                     <div class="vanity-card">
-                        <b>{item.get('category', '').upper()}:</b> {item.get('brand')} - {item.get('shade')}
+                        <b>{str(item.get('category', '')).upper()}:</b> {item.get('brand')} - {item.get('shade')}
                         <br><small>Target: 30 days of consistent use</small>
                     </div>
                     """,
@@ -267,8 +285,8 @@ else:
                 brand = p.get("brand", "Unknown")
                 shade = p.get("shade", "")
                 total_uses = p.get("total_uses", 0)
-                daily_avg = float(p.get("daily_uses_avg", 1.0))
-                remaining_uses_est = max(100 - total_uses, 1)  # Szacowane pozostałe użycia do denka
+                daily_avg = float(p.get("daily_uses_avg", 1.0) or 1.0)
+                remaining_uses_est = max(100 - total_uses, 1)
 
                 st.markdown(
                     f"""
@@ -280,7 +298,6 @@ else:
                     unsafe_allow_html=True,
                 )
 
-                # Dzienny suwak, którego wartość ZAPISUJE SIĘ w bazie
                 new_daily_avg = st.slider(
                     f"Daily usage rate for {brand}",
                     min_value=0.1,
@@ -291,9 +308,7 @@ else:
                 )
 
                 if new_daily_avg != daily_avg:
-                    # Aktualizacja w Supabase bez konieczności resetu
                     conn.table("products").update({"daily_uses_avg": new_daily_avg}).eq("id", prod_id).execute()
-                    p["daily_uses_avg"] = new_daily_avg
 
                 days_left = int(remaining_uses_est / new_daily_avg)
                 est_date = datetime.date.today() + datetime.timedelta(days=days_left)
