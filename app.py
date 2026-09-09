@@ -480,7 +480,9 @@ else:
                             "total_uses": p["total_uses"],
                             "last_used_timestamp": p["last_used_timestamp"],
                         }).eq("id", p["id"]).execute()
-                        conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
+                        stats_id = st.session_state.db["stats"].get("id", 1)
+conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
+                        
 
                         # Sprawdź status wyzwania Roulette
                         check_and_update_challenge(p["id"], uses_added=1)
