@@ -181,7 +181,7 @@ def load_cloud_data():
             "empties": empties,
             "stats": stats,
         }
-    except Exception as e:
+    except Exception:
         return {
             "products": [],
             "wishlist": [],
@@ -287,24 +287,21 @@ def estimate_pan_completion(category, daily_uses):
 
 
 def check_and_update_challenge(product_id, uses_added=1):
-    """Sprawdza i aktualizuje progres aktywnego wyzwania po użyciu kosmetyku."""
     stats = st.session_state.db.get("stats", {})
     challenge = stats.get("active_challenge")
 
     if challenge and challenge.get("product_id") == product_id:
         challenge["current_uses"] += uses_added
         target = challenge.get("target_uses", 1)
+        stats_id = stats.get("id", 1)
         
         if challenge["current_uses"] >= target:
             bonus_xp = challenge.get("reward_xp", 15)
             new_total_xp = stats.get("xp", 0) + bonus_xp
-            stats_id = stats.get("id", 1)
             
-            # Wyszukaj nazwę produktu dla komunikatu sukcesu
             products = st.session_state.db.get("products", [])
-            prod_name = next((f"{p['brand']} - {p['shade']}" for p in products if p['id'] == product_id), "Product")
+            prod_name = next((f"{p['brand']} - {p['shade']}" for p in products if p['id'] == product_id), "Produkt")
             
-            # Zeruj wyzwanie i dodaj premię XP
             conn.table("stats").update({
                 "xp": new_total_xp,
                 "active_challenge": None
@@ -312,7 +309,6 @@ def check_and_update_challenge(product_id, uses_added=1):
             
             st.session_state.challenge_completed_msg = f"🎉 Wyzwanie Ukończone! Użyto {prod_name} {target}x. Otrzymujesz +{bonus_xp} XP!"
         else:
-            stats_id = stats.get("id", 1)
             conn.table("stats").update({
                 "active_challenge": challenge
             }).eq("id", stats_id).execute()
@@ -480,11 +476,10 @@ else:
                             "total_uses": p["total_uses"],
                             "last_used_timestamp": p["last_used_timestamp"],
                         }).eq("id", p["id"]).execute()
-                        stats_id = st.session_state.db["stats"].get("id", 1)
-conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
-                        
 
-                        # Sprawdź status wyzwania Roulette
+                        # NAPRAWIONE: Dodano .eq("id", stats_id)
+                        conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
+
                         check_and_update_challenge(p["id"], uses_added=1)
 
                         st.session_state.db = load_cloud_data()
@@ -568,6 +563,8 @@ conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
 
                             conn.table("empties").insert(empty_item).execute()
                             conn.table("products").delete().eq("id", p["id"]).execute()
+                            
+                            # NAPRAWIONE: Dodano .eq("id", stats_id)
                             conn.table("stats").update({
                                 "finished_lip_products": fin_lips,
                                 "xp": new_xp,
@@ -628,6 +625,7 @@ conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
                             }).eq("id", p["id"]).execute()
 
                             stats_id = st.session_state.db["stats"].get("id", 1)
+                            # NAPRAWIONE: Dodano .eq("id", stats_id)
                             conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
 
                             st.session_state[edit_mode_key] = False
@@ -651,7 +649,6 @@ conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
         stats = st.session_state.db.get("stats", {})
         active_ch = stats.get("active_challenge")
 
-        # Pokaż aktywne wyzwanie jeśli istnieje
         if active_ch:
             products = st.session_state.db.get("products", [])
             ch_product = next((p for p in products if p["id"] == active_ch.get("product_id")), None)
@@ -693,14 +690,12 @@ conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
                         st.rerun()
 
             else:
-                # Jeśli produkt został w międzyczasie usunięty
                 stats_id = stats.get("id", 1)
                 conn.table("stats").update({"active_challenge": None}).eq("id", stats_id).execute()
                 st.rerun()
 
             st.markdown("<hr style='margin:20px 0; border-color:#e2d8ee;'>", unsafe_allow_html=True)
 
-        # Sekcja generatora nowego wyzwania
         st.markdown("#### Wylosuj Nowe Wyzwanie")
         roulette_cat = st.selectbox("Filtruj kadrę do losowania:", ["Wszystkie Kategorie"] + CATEGORIES)
         challenge_type = st.radio("Wybierz tryb wyzwania:", ["Daily Touch (1 Użycie) — +15 XP", "10-Use Focus (10 Użyć) — +100 XP"])
@@ -713,7 +708,6 @@ conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
             if not products_pool:
                 st.warning("Brak produktów spełniających wybrane kryteria.")
             else:
-                # Inteligentny podział i priorytetyzacja (wiek + data ostatniego użycia)
                 def calculate_neglect_score(p):
                     days_owned = calculate_days_owned(p.get("purchase_date", str(datetime.date.today())))
                     last_used_str = p.get("last_used_timestamp", "1970-01-01T00:00:00")
@@ -724,10 +718,7 @@ conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
                         days_unused = 300
                     return (days_owned * 0.4) + (days_unused * 0.6)
 
-                # Sortuj malejąco wg zapomnienia
                 sorted_pool = sorted(products_pool, key=calculate_neglect_score, reverse=True)
-                
-                # Wybierz z top 3 najbardziej zakurzonych produktów
                 top_neglected = sorted_pool[:min(3, len(sorted_pool))]
                 selected_prod = random.choice(top_neglected)
                 st.session_state.roulette_selected = selected_prod
@@ -809,6 +800,7 @@ conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
                         current_xp = st.session_state.db["stats"].get("xp", 0)
                         new_xp = max(current_xp + (int(initial_uses) * 5), 0)
                         stats_id = st.session_state.db["stats"].get("id", 1)
+                        # NAPRAWIONE: Dodano .eq("id", stats_id)
                         conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
 
                     st.success("Product added!")
@@ -959,6 +951,8 @@ conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
                             conn.table("products").update(
                                 {"total_uses": p["total_uses"]}
                             ).eq("id", p["id"]).execute()
+                            
+                            # NAPRAWIONE: Dodano .eq("id", stats_id)
                             conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
                             st.session_state.db = load_cloud_data()
                             st.rerun()
@@ -980,9 +974,10 @@ conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
                             "total_uses": p["total_uses"],
                             "last_used_timestamp": p["last_used_timestamp"],
                         }).eq("id", p["id"]).execute()
+                        
+                        # NAPRAWIONE: Dodano .eq("id", stats_id)
                         conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
 
-                        # Sprawdź status wyzwania Roulette
                         check_and_update_challenge(p["id"], uses_added=1)
 
                         st.session_state.db = load_cloud_data()
@@ -990,7 +985,7 @@ conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
 
                 st.markdown("</div>", unsafe_allow_html=True)
 
-    # --- ANALYTICS / BEAUTY STATS ---
+    # --- ANALYTICS / BEAUTY STATS & NO-BUY ZONE ---
     elif st.session_state.current_page == "Analytics":
         st.markdown("### Beauty Stats & Lip Counter 🐈‍⬛")
 
@@ -1001,7 +996,38 @@ conn.table("stats").update({"xp": new_xp}).eq("id", stats_id).execute()
         total_items = len(products)
         total_spent = sum(p.get("price", 0.0) for p in products)
         finished_lips = stats.get("finished_lip_products", 0)
-        rewards_redeemed = stats.get("rewards_redeemed", 0)
+
+        # Sekcja No-Buy Streak & Punish
+        st.markdown("### 🚨 No-Buy Zone")
+        no_buy_start = stats.get("no_buy_start_date", str(datetime.date.today()))
+        try:
+            days_clean = (datetime.date.today() - datetime.datetime.strptime(no_buy_start, "%Y-%m-%d").date()).days
+        except Exception:
+            days_clean = 0
+
+        st.info(f"🔥 Licznik dni bez zakupów: **{days_clean} dni**")
+
+        with st.expander("Złamałaś zasady No-Buy? 💸 (Zgłoś zakup)"):
+            st.warning("⚠️ Uwaga! Zgłoszenie zakupu zresetuje Twój streak do 0, odejmie **-150 XP** oraz zresetuje aktywne wyzwanie!")
+            if st.button("Potwierdzam: Kupiono nowy kosmetyk 🚨"):
+                stats_id = stats.get("id", 1)
+                current_xp = stats.get("xp", 0)
+                
+                new_xp = max(0, current_xp - 150)
+                new_start_date = str(datetime.date.today())
+                
+                # NAPRAWIONE: Dodano .eq("id", stats_id)
+                conn.table("stats").update({
+                    "xp": new_xp,
+                    "no_buy_start_date": new_start_date,
+                    "active_challenge": None
+                }).eq("id", stats_id).execute()
+                
+                st.error("Licznik zresetowany! Otrzymujesz -150 XP. Czas zacząć od nowa! 💪")
+                st.session_state.db = load_cloud_data()
+                st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
 
         st.markdown(
             f"""
