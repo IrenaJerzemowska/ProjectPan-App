@@ -33,13 +33,15 @@ st.markdown(
         padding-right: 1rem !important;
     }
 
+    /* Nagłówek Sanctuary */
     .sanctuary-header {
         background: #ffffff;
-        border-radius: 6px;
+        border-radius: 12px;
         padding: 1.8rem 1rem 1.4rem 1rem;
         text-align: center;
-        margin-bottom: 16px;
-        box-shadow: 0 4px 15px rgba(120, 100, 150, 0.04);
+        margin-bottom: 20px;
+        border: 1px solid #e2d7f3;
+        box-shadow: 0 4px 15px rgba(90, 70, 120, 0.06);
     }
 
     .sanctuary-header h1 {
@@ -52,8 +54,8 @@ st.markdown(
     }
 
     .sanctuary-header p {
-        color: #b5a4c9;
-        font-size: 1.15rem;
+        color: #9d8ab8;
+        font-size: 1.05rem;
         font-family: 'Playfair Display', serif;
         font-style: italic;
         margin-top: 0.3rem;
@@ -61,19 +63,36 @@ st.markdown(
         font-weight: 400;
     }
 
+    /* Jednolite, eleganckie Karty */
     .vanity-card {
         background: #ffffff;
-        border-radius: 6px;
-        border: 1px solid #e9e2f4;
-        padding: 1.2rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 3px 10px rgba(130, 110, 160, 0.04);
+        border-radius: 12px;
+        border: 1px solid #e3d9f2;
+        padding: 1.25rem;
+        margin-bottom: 1.2rem;
+        box-shadow: 0 4px 12px rgba(90, 70, 120, 0.05);
+        transition: transform 0.2s ease;
+    }
+
+    /* Przycisk menu i powrotu */
+    div.stButton > button {
+        border-radius: 10px !important;
+        border: 1px solid #d4c4ec !important;
+        background-color: #ffffff !important;
+        color: #4a3468 !important;
+        font-weight: 500 !important;
+        box-shadow: 0 2px 6px rgba(90, 70, 120, 0.04) !important;
+    }
+
+    div.stButton > button:hover {
+        border-color: #bfa8e4 !important;
+        background-color: #f8f5fc !important;
     }
 
     div[data-baseweb="input"] > div, div[data-baseweb="select"] > div, div[data-baseweb="base-input"] {
         background-color: #ffffff !important;
         border-color: #dcd0f0 !important;
-        border-radius: 6px !important;
+        border-radius: 8px !important;
         color: #382a4b !important;
     }
 </style>
@@ -99,7 +118,7 @@ TEXTS = {
         "routine_title": "👑 30-Dniowe Wyzwanie Pełnej Rutyny",
         "routine_desc": "Wylosuj po 1 produkcie z każdej kategorii i używaj ich przez miesiąc!",
         "btn_gen_routine": "🎲 Wylosuj Pełną Rutynę (30 Dni)",
-        "estimate_title": "🔮 Estymacja Zużycia i Daty Denka",
+        "estimate_title": "🔮 Project Pan — Estymacja Daty Denka",
     },
     "EN": {
         "tagline": "Minimalist inventory & project pan",
@@ -113,7 +132,7 @@ TEXTS = {
         "routine_title": "👑 30-Day Full Routine Challenge",
         "routine_desc": "Pick 1 product per category and commit to using them for a full month!",
         "btn_gen_routine": "🎲 Generate Full Routine (30 Days)",
-        "estimate_title": "🔮 Pan Date Estimation",
+        "estimate_title": "🔮 Project Pan — Panning Estimations",
     }
 }
 
@@ -139,15 +158,13 @@ def load_cloud_data():
             "active_challenge": stats_data.get("active_challenge", None),
         }
         return {"products": products, "wishlist": wishlist, "empties": empties, "stats": stats}
-    except Exception as e:
-        st.error(f"Error connecting to database: {e}")
+    except Exception:
         return {
             "products": [], "wishlist": [], "empties": [],
             "stats": {"id": 1, "finished_lip_products": 0, "no_buy_start_date": str(datetime.date.today()), "xp": 0, "rewards_redeemed": 0, "active_challenge": None}
         }
 
 
-# Zawsze odświeżamy dane przy załadowaniu strony
 st.session_state.db = load_cloud_data()
 
 if "current_page" not in st.session_state:
@@ -217,17 +234,20 @@ else:
         st.session_state.current_page = "Home"
         st.rerun()
 
-    st.markdown("---")
+    st.markdown("<br>", unsafe_allow_html=True)
 
     # --- COLLECTION ---
     if st.session_state.current_page == "Collection":
-        st.markdown("### Your Collection")
+        st.markdown("### Your Full Collection")
         products = st.session_state.db.get("products", [])
 
         if not products:
-            st.info("Your collection is currently empty or loading...")
+            st.info("Your collection is currently empty.")
         else:
             for p in reversed(products):
+                prod_id = p.get("id")
+                is_panning = p.get("in_project_pan", False)
+
                 st.markdown(
                     f"""
                     <div class="vanity-card">
@@ -238,6 +258,99 @@ else:
                     """,
                     unsafe_allow_html=True,
                 )
+
+                toggle_pan = st.checkbox(
+                    "🌕 Include in Project Pan",
+                    value=bool(is_panning),
+                    key=f"pan_toggle_{prod_id}",
+                )
+
+                if toggle_pan != is_panning:
+                    conn.table("products").update({"in_project_pan": toggle_pan}).eq("id", prod_id).execute()
+                    st.rerun()
+
+    # --- WISHLIST ---
+    elif st.session_state.current_page == "Wishlist":
+        st.markdown("### Wishlist ✨ (14-Day Cooling-Off Rule)")
+        
+        with st.form("add_wishlist_form"):
+            w_brand = st.text_input("Brand")
+            w_item = st.text_input("Item Name / Shade")
+            w_price = st.number_input("Estimated Price", min_value=0.0, value=0.0)
+            w_notes = st.text_area("Why do you want this?")
+
+            if st.form_submit_button("Add to Wishlist ✨"):
+                new_w = {
+                    "brand": w_brand,
+                    "item": w_item,
+                    "price": float(w_price),
+                    "currency": "GBP",
+                    "notes": f"{w_notes} (Added: {datetime.date.today()})"
+                }
+                conn.table("wishlist").insert(new_w).execute()
+                st.session_state.db = load_cloud_data()
+                st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        wishlist_items = st.session_state.db.get("wishlist", [])
+        if not wishlist_items:
+            st.info("Your wishlist is currently empty.")
+        else:
+            for w in wishlist_items:
+                st.markdown(
+                    f"""
+                    <div class="vanity-card">
+                        <h4 style="margin:0; font-family:'Playfair Display', serif;">{w.get('brand', '')} — {w.get('item', '')}</h4>
+                        <p style="margin:6px 0; color:#6b5b7a; font-size:0.88rem;">{w.get('notes', '')}</p>
+                        <span style="background:#e8dff5; color:#4a3468; padding:3px 8px; border-radius:6px; font-size:0.78rem; font-weight:500;">⏳ 14-Day Cooling Off Active</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+    # --- PROJECT PAN (TYLKO ZAZNACZONE PRODUKTY) ---
+    elif st.session_state.current_page == "Project Pan":
+        st.markdown(f"### {t['estimate_title']}")
+        all_products = st.session_state.db.get("products", [])
+        pan_products = [p for p in all_products if p.get("in_project_pan", False)]
+
+        if not pan_products:
+            st.info("No products selected for Project Pan yet. Go to 'Your Collection' and check 'Include in Project Pan' on the items you want to focus on! 🌕")
+        else:
+            for p in pan_products:
+                prod_id = p.get("id")
+                brand = p.get("brand", "Unknown")
+                shade = p.get("shade", "")
+                total_uses = p.get("total_uses", 0)
+                daily_avg = float(p.get("daily_uses_avg", 1.0) or 1.0)
+                remaining_uses_est = max(100 - total_uses, 1)
+
+                st.markdown(
+                    f"""
+                    <div class="vanity-card">
+                        <h4 style="margin:0 0 0.4rem 0; font-family:'Playfair Display', serif;">{brand} — {shade}</h4>
+                        <p style="margin:0;">Total logged uses: <b>{total_uses}</b></p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                new_daily_avg = st.slider(
+                    f"Daily usage rate for {brand}",
+                    min_value=0.1,
+                    max_value=5.0,
+                    value=daily_avg,
+                    step=0.1,
+                    key=f"slider_{prod_id}",
+                )
+
+                if new_daily_avg != daily_avg:
+                    conn.table("products").update({"daily_uses_avg": new_daily_avg}).eq("id", prod_id).execute()
+
+                days_left = int(remaining_uses_est / new_daily_avg)
+                est_date = datetime.date.today() + datetime.timedelta(days=days_left)
+
+                st.info(f"⏳ Estimated Pan Date: **{est_date.strftime('%B %d, %Y')}** ({days_left} days left)")
 
     # --- ROULETTE CHALLENGE WITH MONTHLY ROUTINE ---
     elif st.session_state.current_page == "Roulette Challenge":
@@ -266,52 +379,8 @@ else:
                     f"""
                     <div class="vanity-card">
                         <b>{str(item.get('category', '')).upper()}:</b> {item.get('brand')} - {item.get('shade')}
-                        <br><small>Target: 30 days of consistent use</small>
+                        <br><small style="color:#8c7aa9;">Target: 30 days of consistent use</small>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
-
-    # --- PROJECT PAN & AUTOMATIC ESTIMATIONS ---
-    elif st.session_state.current_page == "Project Pan":
-        st.markdown(f"### {t['estimate_title']}")
-        products = st.session_state.db.get("products", [])
-
-        if not products:
-            st.info("No products found to estimate.")
-        else:
-            for p in products:
-                prod_id = p.get("id")
-                brand = p.get("brand", "Unknown")
-                shade = p.get("shade", "")
-                total_uses = p.get("total_uses", 0)
-                daily_avg = float(p.get("daily_uses_avg", 1.0) or 1.0)
-                remaining_uses_est = max(100 - total_uses, 1)
-
-                st.markdown(
-                    f"""
-                    <div class="vanity-card">
-                        <h4>{brand} — {shade}</h4>
-                        <p>Total logged uses: <b>{total_uses}</b></p>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-                new_daily_avg = st.slider(
-                    f"Daily usage rate for {brand}",
-                    min_value=0.1,
-                    max_value=5.0,
-                    value=daily_avg,
-                    step=0.1,
-                    key=f"slider_{prod_id}",
-                )
-
-                if new_daily_avg != daily_avg:
-                    conn.table("products").update({"daily_uses_avg": new_daily_avg}).eq("id", prod_id).execute()
-
-                days_left = int(remaining_uses_est / new_daily_avg)
-                est_date = datetime.date.today() + datetime.timedelta(days=days_left)
-
-                st.info(f"⏳ Estimated Pan Date: **{est_date.strftime('%B %d, %Y')}** ({days_left} days left)")
-                st.markdown("---")
