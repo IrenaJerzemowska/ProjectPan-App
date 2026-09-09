@@ -71,10 +71,9 @@ st.markdown(
         padding: 1.25rem;
         margin-bottom: 1.2rem;
         box-shadow: 0 4px 12px rgba(90, 70, 120, 0.05);
-        transition: transform 0.2s ease;
     }
 
-    /* Przycisk menu i powrotu */
+    /* Przyciski */
     div.stButton > button {
         border-radius: 10px !important;
         border: 1px solid #d4c4ec !important;
@@ -115,10 +114,7 @@ TEXTS = {
         "btn_shop": "Sklep\nNagród\n\n🛍️",
         "btn_stats": "Statystyki i Analityka 🐈‍⬛",
         "back_menu": "← Powrót do Menu",
-        "routine_title": "👑 30-Dniowe Wyzwanie Pełnej Rutyny",
-        "routine_desc": "Wylosuj po 1 produkcie z każdej kategorii i używaj ich przez miesiąc!",
-        "btn_gen_routine": "🎲 Wylosuj Pełną Rutynę (30 Dni)",
-        "estimate_title": "🔮 Project Pan — Estymacja Daty Denka",
+        "estimate_title": "🔮 Project Pan — Logowanie Zużycia",
     },
     "EN": {
         "tagline": "Minimalist inventory & project pan",
@@ -129,10 +125,7 @@ TEXTS = {
         "btn_shop": "Reward\nShop\n\n🛍️",
         "btn_stats": "Beauty Stats & Analytics 🐈‍⬛",
         "back_menu": "← Back to Menu",
-        "routine_title": "👑 30-Day Full Routine Challenge",
-        "routine_desc": "Pick 1 product per category and commit to using them for a full month!",
-        "btn_gen_routine": "🎲 Generate Full Routine (30 Days)",
-        "estimate_title": "🔮 Project Pan — Panning Estimations",
+        "estimate_title": "🔮 Project Pan — Usage Logging",
     }
 }
 
@@ -253,7 +246,7 @@ else:
                     <div class="vanity-card">
                         <h4 style="margin:0 0 0.4rem 0; font-family:'Playfair Display', serif;">{p.get('brand', '')} — <span style="font-weight:400;">{p.get('shade', '')}</span></h4>
                         <p style="margin:0 0 0.6rem 0; color:#8c7aa9; font-size:0.88rem;">Category: {p.get('category', '')}</p>
-                        <p style="margin:0; font-size:0.9rem;"><strong>Price:</strong> {p.get('price', 0):.2f} {p.get('currency', 'GBP')} | <strong>Uses:</strong> {p.get('total_uses', 0)}</p>
+                        <p style="margin:0; font-size:0.9rem;"><strong>Price:</strong> {p.get('price', 0):.2f} {p.get('currency', 'GBP')} | <strong>Logged Uses:</strong> {p.get('total_uses', 0)}</p>
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -268,6 +261,187 @@ else:
                 if toggle_pan != is_panning:
                     conn.table("products").update({"in_project_pan": toggle_pan}).eq("id", prod_id).execute()
                     st.rerun()
+
+    # --- PROJECT PAN & LOGOWANIE ZUŻYCIA ---
+    elif st.session_state.current_page == "Project Pan":
+        st.markdown(f"### {t['estimate_title']}")
+        all_products = st.session_state.db.get("products", [])
+        pan_products = [p for p in all_products if p.get("in_project_pan", False)]
+
+        if not pan_products:
+            st.info("No products selected for Project Pan yet. Go to 'Your Collection' and check 'Include in Project Pan' on the items you want to focus on! 🌕")
+        else:
+            for p in pan_products:
+                prod_id = p.get("id")
+                brand = p.get("brand", "Unknown")
+                shade = p.get("shade", "")
+                total_uses = p.get("total_uses", 0)
+                daily_avg = float(p.get("daily_uses_avg", 1.0) or 1.0)
+                remaining_uses_est = max(100 - total_uses, 1)
+
+                st.markdown(
+                    f"""
+                    <div class="vanity-card">
+                        <h4 style="margin:0 0 0.4rem 0; font-family:'Playfair Display', serif;">{brand} — {shade}</h4>
+                        <p style="margin:0; font-size:1rem;">Total logged uses: <b>{total_uses}</b></p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                btn_col1, btn_col2 = st.columns(2)
+                with btn_col1:
+                    if st.button(f"+1 Use ✨", key=f"add_1_{prod_id}", use_container_width=True):
+                        new_uses = total_uses + 1
+                        conn.table("products").update({"total_uses": new_uses}).eq("id", prod_id).execute()
+                        st.session_state.db = load_cloud_data()
+                        st.rerun()
+                with btn_col2:
+                    if st.button(f"+5 Uses 🚀", key=f"add_5_{prod_id}", use_container_width=True):
+                        new_uses = total_uses + 5
+                        conn.table("products").update({"total_uses": new_uses}).eq("id", prod_id).execute()
+                        st.session_state.db = load_cloud_data()
+                        st.rerun()
+
+                new_daily_avg = st.slider(
+                    f"Daily usage rate for {brand}",
+                    min_value=0.1,
+                    max_value=5.0,
+                    value=daily_avg,
+                    step=0.1,
+                    key=f"slider_{prod_id}",
+                )
+
+                if new_daily_avg != daily_avg:
+                    conn.table("products").update({"daily_uses_avg": new_daily_avg}).eq("id", prod_id).execute()
+
+                days_left = int(remaining_uses_est / new_daily_avg)
+                est_date = datetime.date.today() + datetime.timedelta(days=days_left)
+
+                st.info(f"⏳ Estimated Pan Date: **{est_date.strftime('%B %d, %Y')}** ({days_left} days left)")
+                st.markdown("<hr style='border:none; border-top:1px dashed #dcd0f0;'>", unsafe_allow_html=True)
+
+    # --- RULETKA (DWIE OPCJE LOSOWANIA) ---
+    elif st.session_state.current_page == "Roulette Challenge":
+        st.markdown("### 🎲 Beauty Roulette Challenge")
+        st.write("Wybierz tryb losowania i daj się zaskoczyć swoim kosmetykom!")
+
+        products = st.session_state.db.get("products", [])
+
+        if not products:
+            st.warning("Twój zestaw produktów jest pusty. Dodaj kosmetyki w kolekcji!")
+        else:
+            col_single, col_full = st.columns(2)
+
+            with col_single:
+                if st.button("🎲 Single Product\n(Pojedynczy)", use_container_width=True):
+                    st.session_state.roulette_single = random.choice(products)
+                    st.session_state.roulette_mode = "single"
+
+            with col_full:
+                if st.button("👑 Full Face\n(Cała Rutyna)", use_container_width=True):
+                    categories = set(p.get("category", "Uncategorized") for p in products)
+                    routine = []
+                    for cat in categories:
+                        cat_prods = [p for p in products if p.get("category") == cat]
+                        routine.append(random.choice(cat_prods))
+                    st.session_state.roulette_full = routine
+                    st.session_state.roulette_mode = "full"
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # Wyświetlanie wyników losowania
+            if st.session_state.get("roulette_mode") == "single":
+                item = st.session_state.roulette_single
+                st.success("🎉 Wylosowano pojedynczy produkt do dzisiejszego makijażu!")
+                st.markdown(
+                    f"""
+                    <div class="vanity-card" style="text-align:center;">
+                        <span style="font-size:0.85rem; color:#8c7aa9; text-transform:uppercase;">{item.get('category', '')}</span>
+                        <h3 style="margin:0.2rem 0; font-family:'Playfair Display', serif;">{item.get('brand')}</h3>
+                        <p style="margin:0; font-size:1.1rem; color:#4a3468;"><b>{item.get('shade')}</b></p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+            elif st.session_state.get("roulette_mode") == "full":
+                st.success("👑 Wylosowano pełny Zestaw Full Face!")
+                for item in st.session_state.roulette_full:
+                    st.markdown(
+                        f"""
+                        <div class="vanity-card">
+                            <b>{str(item.get('category', '')).upper()}:</b> {item.get('brand')} - {item.get('shade')}
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+    # --- STATYSTYKI I ANALITYKA ---
+    elif st.session_state.current_page == "Analytics":
+        st.markdown("### 🐈‍⬛ Beauty Stats & Analytics")
+
+        products = st.session_state.db.get("products", [])
+        empties = st.session_state.db.get("empties", [])
+        stats = st.session_state.db.get("stats", {})
+
+        total_value = sum(float(p.get("price", 0) or 0) for p in products)
+        total_uses = sum(int(p.get("total_uses", 0) or 0) for p in products)
+
+        # Licznik No-Buy
+        start_date_str = stats.get("no_buy_start_date", str(datetime.date.today()))
+        try:
+            start_date = datetime.datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            no_buy_days = (datetime.date.today() - start_date).days
+        except Exception:
+            no_buy_days = 0
+
+        st.markdown(
+            f"""
+            <div class="vanity-card" style="text-align:center;">
+                <h2 style="margin:0; color:#4a3468; font-size:2.4rem;">{no_buy_days} Days</h2>
+                <p style="margin:0; color:#8c7aa9;">Streak Low-Buy / No-Buy 🌿</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        col_s1, col_s2 = st.columns(2)
+        with col_s1:
+            st.markdown(
+                f"""
+                <div class="vanity-card">
+                    <p style="margin:0; font-size:0.85rem; color:#8c7aa9;">Wartość Kolekcji</p>
+                    <h3 style="margin:0.2rem 0; color:#3a3342;">{total_value:.2f} GBP</h3>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        with col_s2:
+            st.markdown(
+                f"""
+                <div class="vanity-card">
+                    <p style="margin:0; font-size:0.85rem; color:#8c7aa9;">Łączne Zużycia</p>
+                    <h3 style="margin:0.2rem 0; color:#3a3342;">{total_uses} x</h3>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        st.markdown("#### 🗑️ Złote Denka (Empties)")
+        if not empties:
+            st.info("Brak zużytych kosmetyków w cmentarzyku denek.")
+        else:
+            for e in empties:
+                st.markdown(
+                    f"""
+                    <div class="vanity-card">
+                        <h4 style="margin:0; font-family:'Playfair Display', serif;">🎉 {e.get('brand')} — {e.get('shade')}</h4>
+                        <p style="margin:4px 0 0 0; color:#8c7aa9; font-size:0.85rem;">Wydenkowane!</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
     # --- WISHLIST ---
     elif st.session_state.current_page == "Wishlist":
@@ -303,83 +477,6 @@ else:
                         <h4 style="margin:0; font-family:'Playfair Display', serif;">{w.get('brand', '')} — {w.get('item', '')}</h4>
                         <p style="margin:6px 0; color:#6b5b7a; font-size:0.88rem;">{w.get('notes', '')}</p>
                         <span style="background:#e8dff5; color:#4a3468; padding:3px 8px; border-radius:6px; font-size:0.78rem; font-weight:500;">⏳ 14-Day Cooling Off Active</span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-    # --- PROJECT PAN (TYLKO ZAZNACZONE PRODUKTY) ---
-    elif st.session_state.current_page == "Project Pan":
-        st.markdown(f"### {t['estimate_title']}")
-        all_products = st.session_state.db.get("products", [])
-        pan_products = [p for p in all_products if p.get("in_project_pan", False)]
-
-        if not pan_products:
-            st.info("No products selected for Project Pan yet. Go to 'Your Collection' and check 'Include in Project Pan' on the items you want to focus on! 🌕")
-        else:
-            for p in pan_products:
-                prod_id = p.get("id")
-                brand = p.get("brand", "Unknown")
-                shade = p.get("shade", "")
-                total_uses = p.get("total_uses", 0)
-                daily_avg = float(p.get("daily_uses_avg", 1.0) or 1.0)
-                remaining_uses_est = max(100 - total_uses, 1)
-
-                st.markdown(
-                    f"""
-                    <div class="vanity-card">
-                        <h4 style="margin:0 0 0.4rem 0; font-family:'Playfair Display', serif;">{brand} — {shade}</h4>
-                        <p style="margin:0;">Total logged uses: <b>{total_uses}</b></p>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-                new_daily_avg = st.slider(
-                    f"Daily usage rate for {brand}",
-                    min_value=0.1,
-                    max_value=5.0,
-                    value=daily_avg,
-                    step=0.1,
-                    key=f"slider_{prod_id}",
-                )
-
-                if new_daily_avg != daily_avg:
-                    conn.table("products").update({"daily_uses_avg": new_daily_avg}).eq("id", prod_id).execute()
-
-                days_left = int(remaining_uses_est / new_daily_avg)
-                est_date = datetime.date.today() + datetime.timedelta(days=days_left)
-
-                st.info(f"⏳ Estimated Pan Date: **{est_date.strftime('%B %d, %Y')}** ({days_left} days left)")
-
-    # --- ROULETTE CHALLENGE WITH MONTHLY ROUTINE ---
-    elif st.session_state.current_page == "Roulette Challenge":
-        st.markdown(f"### {t['routine_title']}")
-        st.write(t["routine_desc"])
-
-        products = st.session_state.db.get("products", [])
-
-        if st.button(t["btn_gen_routine"]):
-            if not products:
-                st.warning("Your collection is empty! Add products first.")
-            else:
-                categories = set(p.get("category", "Uncategorized") for p in products)
-                routine = []
-                for cat in categories:
-                    cat_prods = [p for p in products if p.get("category") == cat]
-                    routine.append(random.choice(cat_prods))
-
-                st.session_state.monthly_routine = routine
-                st.success("Selected Routine Challenge generated below!")
-
-        if "monthly_routine" in st.session_state:
-            st.markdown("#### Your 30-Day Project Pan Routine:")
-            for item in st.session_state.monthly_routine:
-                st.markdown(
-                    f"""
-                    <div class="vanity-card">
-                        <b>{str(item.get('category', '')).upper()}:</b> {item.get('brand')} - {item.get('shade')}
-                        <br><small style="color:#8c7aa9;">Target: 30 days of consistent use</small>
                     </div>
                     """,
                     unsafe_allow_html=True,
