@@ -33,21 +33,24 @@ button {
     background: linear-gradient(135deg, #ffffff 0%, #f7f1fc 100%) !important;
     color: #3a3342 !important;
     font-weight: 600 !important;
-    font-size: 1.1rem !important;
+    font-size: 1rem !important; /* Slightly reduced font size so long text fits on 1 line */
     letter-spacing: 0.2px;
     box-shadow: 0 4px 14px rgba(90, 70, 120, 0.10) !important;
-    padding: 0.85rem 0.75rem !important;
-    margin: 0.35rem 0;
-    width: 100%;
-    min-height: 52px !important; /* Touch target minimum per Apple iOS guidelines */
+    
+    /* UNIFIED BUTTON SIZING FIXES */
+    width: 100% !important;
+    height: 52px !important;      /* Forces all buttons to the exact same vertical height */
+    min-height: 52px !important;  /* iOS touch standard */
+    padding: 0 0.5rem !important; /* Standardizes inner spacing */
+    
     display: flex !important;
     align-items: center;
     justify-content: center;
     text-align: center;
-    line-height: 1.3;
-    position: relative;
-    z-index: 2; /* Ensures high z-index touch targeting */
-    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    line-height: 1.2;
+    white-space: nowrap !important; /* Prevents text wrap from pushing height out of alignment */
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 button:hover {
