@@ -28,36 +28,45 @@ button, div[data-baseweb="select"] {
 }
 
 button {
-    /* 1. FORCE SQUARE SHAPE & EQUAL SIZES */
+    /* 1. POLISHED & UNIFIED SIZING */
     width: 100% !important;
-    aspect-ratio: 1 / 1 !important; /* Locks width and height to a 1:1 square ratio */
-    min-height: 80px !important;    /* Ensures a comfortable touch target on iPhone */
-    max-width: 120px !important;    /* Prevents buttons from growing awkwardly wide */
-    margin: 0.35rem auto !important;/* Centers square buttons in their container */
+    min-height: 56px !important;    /* Uniform height for all buttons */
+    max-height: 56px !important;    /* Prevents tall bulging boxes */
+    padding: 0.75rem 1rem !important;
+    margin: 0.4rem 0 !important;
     
-    /* 2. SQUARISH STYLING */
-    border-radius: 18px !important; /* Soft, squarish rounded corners (app icon style) */
-    border: 1px solid #d4c4ec !important;
-    background: linear-gradient(135deg, #ffffff 0%, #f7f1fc 100%) !important;
+    /* 2. ELEGANT iOS CAPSULE / CARD SHAPE */
+    border-radius: 14px !important; /* Soft, modern rounded rectangle */
+    border: 1px solid rgba(180, 160, 210, 0.4) !important;
+    background: #ffffff !important;  /* Crisp white card background */
     color: #3a3342 !important;
-    font-weight: 600 !important;
-    font-size: 0.9rem !important;   /* Slightly smaller text so multi-word labels fit nicely */
-    letter-spacing: 0.2px;
-    box-shadow: 0 4px 14px rgba(90, 70, 120, 0.10) !important;
     
-    /* 3. ALIGNMENT & WRAPPING */
+    /* 3. TYPOGRAPHY & LAYOUT */
+    font-size: 0.98rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.1px;
+    white-space: nowrap !important;  /* Stops text from wrapping awkwardly onto multiple lines */
+    
+    /* 4. FLEX LAYOUT & SHADOWS */
     display: flex !important;
-    flex-direction: column !important;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    line-height: 1.25;
-    padding: 0.5rem !important;
-    white-space: normal !important;  /* Allows text like "Mark Finished" to stack cleanly */
-    word-break: break-word;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !alignment;
+    box-shadow: 0 2px 8px rgba(90, 70, 120, 0.06) !important;
     position: relative;
     z-index: 2;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    border-color: #bfa8e4 !important;
+    box-shadow: 0 6px 16px rgba(90, 70, 120, 0.12) !important;
+    background: #faf7fd !important;
+}
+
+button:active {
+    transform: translateY(0);
 }
 button:hover {
     transform: translateY(-2px);
