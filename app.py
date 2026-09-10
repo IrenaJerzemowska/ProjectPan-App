@@ -59,24 +59,16 @@ button {
 }
 
 button:hover {
-    transform: translateY(-2px);
+    transform: translateY(-2px) !important;
     border-color: #bfa8e4 !important;
     box-shadow: 0 6px 16px rgba(90, 70, 120, 0.12) !important;
     background: #faf7fd !important;
 }
 
 button:active {
-    transform: translateY(0);
+    transform: translateY(0px) !important;
+    box-shadow: 0 2px 6px rgba(90, 70, 120, 0.08) !important;
 }
-button:hover {
-    transform: translateY(-2px);
-    border-color: #bfa8e4 !important;
-    box-shadow: 0 8px 20px rgba(90, 70, 120, 0.18) !important;
-    background: linear-gradient(135deg, #f8f5fc 0%, #efe4fb 100%) !important;
-}
-
-button:active {
-    transform: translateY(0px);
 }
 
 /* 2. Global Theme & Mobile Responsiveness */
