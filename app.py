@@ -28,31 +28,37 @@ button, div[data-baseweb="select"] {
 }
 
 button {
-    border-radius: 16px !important;
+    /* 1. FORCE SQUARE SHAPE & EQUAL SIZES */
+    width: 100% !important;
+    aspect-ratio: 1 / 1 !important; /* Locks width and height to a 1:1 square ratio */
+    min-height: 80px !important;    /* Ensures a comfortable touch target on iPhone */
+    max-width: 120px !important;    /* Prevents buttons from growing awkwardly wide */
+    margin: 0.35rem auto !important;/* Centers square buttons in their container */
+    
+    /* 2. SQUARISH STYLING */
+    border-radius: 18px !important; /* Soft, squarish rounded corners (app icon style) */
     border: 1px solid #d4c4ec !important;
     background: linear-gradient(135deg, #ffffff 0%, #f7f1fc 100%) !important;
     color: #3a3342 !important;
     font-weight: 600 !important;
-    font-size: 1rem !important; /* Slightly reduced font size so long text fits on 1 line */
+    font-size: 0.9rem !important;   /* Slightly smaller text so multi-word labels fit nicely */
     letter-spacing: 0.2px;
     box-shadow: 0 4px 14px rgba(90, 70, 120, 0.10) !important;
     
-    /* UNIFIED BUTTON SIZING FIXES */
-    width: 100% !important;
-    height: 52px !important;      /* Forces all buttons to the exact same vertical height */
-    min-height: 52px !important;  /* iOS touch standard */
-    padding: 0 0.5rem !important; /* Standardizes inner spacing */
-    
+    /* 3. ALIGNMENT & WRAPPING */
     display: flex !important;
+    flex-direction: column !important;
     align-items: center;
     justify-content: center;
     text-align: center;
-    line-height: 1.2;
-    white-space: nowrap !important; /* Prevents text wrap from pushing height out of alignment */
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.25;
+    padding: 0.5rem !important;
+    white-space: normal !important;  /* Allows text like "Mark Finished" to stack cleanly */
+    word-break: break-word;
+    position: relative;
+    z-index: 2;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
-
 button:hover {
     transform: translateY(-2px);
     border-color: #bfa8e4 !important;
